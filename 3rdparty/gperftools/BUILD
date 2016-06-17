@@ -9,7 +9,6 @@ package_file = package_name + "-" + package_version + ".tar.gz"
 package_dir = package_name + "-" + package_version
 
 COMMON_EXECUTE = [
-    "export UNWIND_DIR=$$(pwd)/$(GENDIR)/3rdparty/libunwind",
     "export INSTALL_DIR=$$(pwd)/$(@D)",
     "export TMP_DIR=$$(mktemp -d -t gperftools.XXXXX)",
     "mkdir -p $$TMP_DIR",
@@ -26,7 +25,9 @@ DARWIN_EXECUTE = "\n".join(COMMON_EXECUTE + [
 ])
 
 LINUX_EXECUTE = "\n".join(COMMON_EXECUTE + [
-     './configure --prefix=$$INSTALL_DIR --enable-shared=no LIBS="-Wl,--rpath -Wl,$$UNWIND_DIR/lib -L$$UNWIND_DIR/lib" CPPFLAGS=-I$$UNWIND_DIR LDFLAGS=-L$$UNWIND_DIR/lib',
+     'export UNWIND_DIR=$$(pwd)/$(GENDIR)/3rdparty/libunwind',
+     'echo $$UNWIND_DIR',
+     './configure --prefix=$$INSTALL_DIR --enable-shared=no LIBS="-Wl,--rpath -Wl,$$UNWIND_DIR/lib -L$$UNWIND_DIR/lib" CPPFLAGS=-I$$UNWIND_DIR/include LDFLAGS=-L$$UNWIND_DIR/lib',
      'make install LIBS="-Wl,--rpath -Wl,$$UNWIND_DIR/lib -L$$UNWIND_DIR/lib" CPPFLAGS=-I$$UNWIND_DIR/include LDFLAGS=-L$$UNWIND_DIR/lib',
      'rm -rf $$TMP_DIR',
 ])
