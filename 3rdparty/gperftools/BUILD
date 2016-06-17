@@ -9,9 +9,10 @@ package_file = package_name + "-" + package_version + ".tar.gz"
 package_dir = package_name + "-" + package_version
 
 COMMON_EXECUTE = [
-    'export UNWIND_DIR=$$(pwd)/$(GENDIR)/3rdparty/libunwind',
-    "echo $$UNWIND_DIR",
+    "export UNWIND_DIR=$$(pwd)/$(GENDIR)/3rdparty/libunwind",
+    "echo 'Unwind_dir: ' $$UNWIND_DIR",
     "export INSTALL_DIR=$$(pwd)/$(@D)",
+    "echo 'Install dir: ' $$INSTALL_DIR",
     "export TMP_DIR=$$(mktemp -d -t gperftools.XXXXX)",
     "mkdir -p $$TMP_DIR",
     "cp -R $(SRCS) $$TMP_DIR",
