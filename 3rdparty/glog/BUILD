@@ -10,7 +10,7 @@ package_dir = package_name + "-" + package_version
 
 COMMON_EXECUTE = [
     "export UNWIND_DIR=$$(pwd)/$(GENDIR)/3rdparty/libunwind",
-    "echo $$UNWIND_DIR"
+    "echo $$UNWIND_DIR",
     "export INSTALL_DIR=$$(pwd)/$(@D)",
     "export TMP_DIR=$$(mktemp -d -t glog.XXXXX)",
     "mkdir -p $$TMP_DIR",
