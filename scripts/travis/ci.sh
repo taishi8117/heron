@@ -21,6 +21,7 @@ source ${DIR}/common.sh
 #${DIR}/test.sh
 #end_timer "$T"
 
+bazel --bazelrc=tools/travis-ci/bazel.rc build --config=ubuntu //3rdparty/glog:glog-srcs --verbose_failures
 bazel --bazelrc=tools/travis-ci/bazel.rc build --config=ubuntu //3rdparty/gperftools:gperftools-srcs --verbose_failures
 
 #print_timer_summary
