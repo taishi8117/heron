@@ -20,13 +20,13 @@ COMMON_EXECUTE = [
 ]
 
 DARWIN_EXECUTE = "\n".join(COMMON_EXECUTE + [
-    "./configure --prefix=$$INSTALL_DIR --enable-shared=no",
+    "./configure --prefix=$$INSTALL_DIR --enable-shared=no; cat config.log",
     "make install",
     "rm -rf $$TMP_DIR",
 ])
 
 LINUX_EXECUTE = "\n".join(COMMON_EXECUTE + [
-     './configure --prefix=$$INSTALL_DIR --enable-shared=no LIBS="-Wl,--rpath -Wl,$$UNWIND_DIR/lib -L$$UNWIND_DIR/lib" CPPFLAGS=-I$$UNWIND_DIR LDFLAGS="-Wl,--eh-frame-hdr -L$$UNWIND_DIR/lib" || cat config.log',
+     './configure --prefix=$$INSTALL_DIR --enable-shared=no LIBS="-Wl,--rpath -Wl,$$UNWIND_DIR/lib -L$$UNWIND_DIR/lib" CPPFLAGS=-I$$UNWIND_DIR/include LDFLAGS="-lunwind -L$$UNWIND_DIR/lib" || cat config.log',
      'make install LIBS="-Wl,--rpath -Wl,$$UNWIND_DIR/lib -L$$UNWIND_DIR/lib" CPPFLAGS=-I$$UNWIND_DIR/include LDFLAGS=-L$$UNWIND_DIR/lib',
      'rm -rf $$TMP_DIR',
 ])
