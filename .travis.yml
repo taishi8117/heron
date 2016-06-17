@@ -45,5 +45,3 @@ script:
   - g++ --version
   - scripts/travis/ci.sh
 
-after_failure:
-  - cat config.log
