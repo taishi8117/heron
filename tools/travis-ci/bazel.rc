@@ -7,6 +7,9 @@ test --ram_utilization_factor=10
 # This is so we understand failures better
 build --verbose_failures
 
+# Add sandbox_debug
+build --sandbox_debug
+
 build --show_timestamps
 test --show_timestamps
 
