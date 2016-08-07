@@ -35,6 +35,7 @@ class TestSane(Topology):
   bolt = HeronComponentSpec(None, "bl_class", False, 4,
                             inputs={spout: Grouping.SHUFFLE, spout['error_stream']: Grouping.ALL})
 
+
 class TopologyTest(unittest.TestCase):
   def test_sane_topology(self):
     self.assertEqual(TestSane.topology_name, "TestSaneTopology")
@@ -127,3 +128,55 @@ class TopologyTest(unittest.TestCase):
     self.assertEqual(proto_topo.state, topology_pb2.TopologyState.Value("RUNNING"))
     TestSane.deploy_deactivated()
     self.assertEqual(proto_topo.state, topology_pb2.TopologyState.Value("PAUSED"))
+
+  def test_no_spout(self):
+    with self.assertRaises(ValueError):
+      class JustBolt(Topology):
+        bolt = HeronComponentSpec(None, "bl_class", False, 4)
+
+  def test_class_dict_to_specs(self):
+    # duplicate component name
+    class_dict = {"spout": HeronComponentSpec("same_name", "sp_cls", True, 1),
+                  "bolt": HeronComponentSpec("same_name", "bl_cls", False, 2)}
+    with self.assertRaises(ValueError):
+      TopologyType.class_dict_to_specs(class_dict)
+
+  def test_add_spout_specs(self):
+    # spout with no output
+    spec = HeronComponentSpec("spout", "sp_cls", True, 1)
+    with self.assertRaises(ValueError):
+      TopologyType.add_spout_specs(spec, {})
+
+  def test_add_bolt_specs(self):
+    spec = HeronComponentSpec("bolt", "bl_cls", False, 1)
+    with self.assertRaises(ValueError):
+      TopologyType.add_bolt_specs(spec, {})
+
+  def test_sanitize_config(self):
+    # non-string key
+    with self.assertRaises(TypeError):
+      TopologyType._sanitize_config({['k', 'e', 'y']: "value"})
+    with self.assertRaises(TypeError):
+      TopologyType._sanitize_config({None: "value"})
+
+    # convert boolean value
+    ret = TopologyType._sanitize_config({"key": True})
+    self.assertEqual(ret["key"], "true")
+    ret = TopologyType._sanitize_config({"key": False})
+    self.assertEqual(ret["key"], "false")
+
+    # convert int and float
+    ret = TopologyType._sanitize_config({"key": 10})
+    self.assertEqual(ret["key"], "10")
+    ret = TopologyType._sanitize_config({"key": -2400000})
+    self.assertEqual(ret["key"], "-2400000")
+    ret = TopologyType._sanitize_config({"key": 0.0000001})
+    self.assertEqual(ret["key"], "1e-07")
+    ret = TopologyType._sanitize_config({"key": -15.33333})
+    self.assertEqual(ret["key"], "-15.33333")
+
+    # non-string value -> should expect the same object
+    ret = TopologyType._sanitize_config({"key": ['v','a','l','u','e']})
+    self.assertEqual(ret["key"], ['v','a','l','u','e'])
+    ret = TopologyType._sanitize_config({"key": None})
+    self.assertEqual(ret["key"], None)

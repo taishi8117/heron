@@ -182,7 +182,7 @@ class TopologyType(type):
     sanitized = {}
     for key, value in custom_config.iteritems():
       if not isinstance(key, str):
-        raise TypeError("Key for component-specific configuration must be string, given: %s: %s"
+        raise TypeError("Key for topology-wide configuration must be string, given: %s: %s"
                         % (str(type(key)), str(key)))
 
       if isinstance(value, bool):
