@@ -92,8 +92,8 @@ class ComponentSpecTest(unittest.TestCase):
     self.assertEqual(ret["key"], "-15.33333")
 
     # non-string value -> should expect the same object
-    ret = HeronComponentSpec._sanitize_config({"key": ['v','a','l','u','e']})
-    self.assertEqual(ret["key"], ['v','a','l','u','e'])
+    ret = HeronComponentSpec._sanitize_config({"key": ['v', 'a', 'l', 'u', 'e']})
+    self.assertEqual(ret["key"], ['v', 'a', 'l', 'u', 'e'])
     ret = HeronComponentSpec._sanitize_config({"key": None})
     self.assertEqual(ret["key"], None)
 
@@ -164,6 +164,8 @@ class ComponentSpecTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       spec._sanitize_inputs()
 
+  # pylint: disable=redefined-variable-type
+  # pylint: disable=pointless-statement
   def test_sanitize_outputs(self):
     # outputs is None (no argument to outputs)
     spec = HeronComponentSpec("spout", "class", True, 1)
@@ -211,7 +213,7 @@ class ComponentSpecTest(unittest.TestCase):
     # outputs sane
     spec = HeronComponentSpec("spout", "class", True, 1)
     spec.outputs = ["string", "hello", Stream(fields=["abc", "def"], name="another_stream"),
-      Stream(fields=["another", "default"], name="default")]
+                    Stream(fields=["another", "default"], name="default")]
     ret = spec.get_out_streamids()
     self.assertEqual(ret, {"default", "another_stream"})
 
@@ -219,21 +221,21 @@ class ComponentSpecTest(unittest.TestCase):
     # HeronComponentSpec name set
     spec = HeronComponentSpec("spout", "class", True, 1)
     spec.outputs = ["string", "hello", Stream(fields=["abc", "def"], name="another_stream"),
-      Stream(fields=["another", "default"], name="default")]
+                    Stream(fields=["another", "default"], name="default")]
     ret = spec['another_stream']
     self.assertEqual(ret, GlobalStreamId("spout", "another_stream"))
 
     # HeronComponentSpec name not set
     spec = HeronComponentSpec(None, "class", True, 1)
     spec.outputs = ["string", "hello", Stream(fields=["abc", "def"], name="another_stream"),
-      Stream(fields=["another", "default"], name="default")]
+                    Stream(fields=["another", "default"], name="default")]
     ret = spec['default']
     self.assertEqual(ret, GlobalStreamId(spec, "default"))
 
     # stream id not registered
     spec = HeronComponentSpec(None, "class", True, 1)
     spec.outputs = ["string", "hello", Stream(fields=["abc", "def"], name="another_stream"),
-      Stream(fields=["another", "default"], name="default")]
+                    Stream(fields=["another", "default"], name="default")]
     with self.assertRaises(ValueError):
       spec['non_existent_stream']
 

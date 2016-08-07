@@ -35,7 +35,9 @@ class TestSane(Topology):
   bolt = HeronComponentSpec(None, "bl_class", False, 4,
                             inputs={spout: Grouping.SHUFFLE, spout['error_stream']: Grouping.ALL})
 
-
+# pylint: disable=no-member
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-statements
 class TopologyTest(unittest.TestCase):
   def test_sane_topology(self):
     self.assertEqual(TestSane.topology_name, "TestSaneTopology")
@@ -131,6 +133,7 @@ class TopologyTest(unittest.TestCase):
 
   def test_no_spout(self):
     with self.assertRaises(ValueError):
+      # pylint:disable = unused-variable
       class JustBolt(Topology):
         bolt = HeronComponentSpec(None, "bl_class", False, 4)
 
@@ -176,7 +179,7 @@ class TopologyTest(unittest.TestCase):
     self.assertEqual(ret["key"], "-15.33333")
 
     # non-string value -> should expect the same object
-    ret = TopologyType._sanitize_config({"key": ['v','a','l','u','e']})
-    self.assertEqual(ret["key"], ['v','a','l','u','e'])
+    ret = TopologyType._sanitize_config({"key": ['v', 'a', 'l', 'u', 'e']})
+    self.assertEqual(ret["key"], ['v', 'a', 'l', 'u', 'e'])
     ret = TopologyType._sanitize_config({"key": None})
     self.assertEqual(ret["key"], None)
