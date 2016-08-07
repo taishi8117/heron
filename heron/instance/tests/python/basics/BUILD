@@ -31,3 +31,18 @@ pex_test(
   ],
   size = "small",
 )
+
+pex_test(
+  name = "topology_unittest",
+  srcs = ["topology_unittest.py"],
+  deps = [
+    "//heron/common/tests/python:pytest-lib",
+    "//heron/instance/src/python/basics:pyheron_lib",
+  ],
+  reqs = [
+    "py==1.4.27",
+    "pytest==2.6.4",
+    "unittest2==0.5.1",
+  ],
+  size = "small",
+)
