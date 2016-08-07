@@ -47,7 +47,9 @@ class Stream(object):
     # self.fields is always list
     self.fields = fields
 
-    if isinstance(name, str):
+    if name is None:
+      raise TypeError("Stream's name cannot be None")
+    elif isinstance(name, str):
       self.stream_id = name
     else:
       raise TypeError("Stream name must be a string, given: %s" % str(name))
@@ -91,7 +93,7 @@ class Grouping(object):
              gtype.python_serialized is not None
     else:
       #pylint: disable=fixme
-      #TODO: DIRECT, CUSTOM are not supported yet
+      #TODO: DIRECT are not supported yet
       return False
 
   @classmethod
@@ -101,6 +103,10 @@ class Grouping(object):
       fields = fields[0]
     else:
       fields = list(fields)
+
+    for i in fields:
+      if not isinstance(i, str):
+        raise TypeError("Non-string cannot be specified in fields")
 
     if not fields:
       raise ValueError("List cannot be empty for fields grouping")
@@ -114,7 +120,7 @@ class Grouping(object):
 
     :param classpath: classpath to the ICustomGrouping class to use
     """
-    if not isinstance(classpath, str):
+    if classpath is None or not isinstance(classpath, str):
       raise TypeError("Argument to custom() must be classpath string to custom grouping, given: "
                       "%s" % str(classpath))
     serialized = default_serializer.serialize(classpath)

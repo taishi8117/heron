@@ -146,9 +146,6 @@ class SingleThreadHeronInstance(object):
     self.my_pplan_helper = pplan_helper
     self.my_pplan_helper.set_topology_context(self.metrics_collector)
 
-    # pylint: disable=fixme
-    # TODO: initialize communicator for back pressure
-
     try:
       if pplan_helper.is_spout:
         # Starting a spout
