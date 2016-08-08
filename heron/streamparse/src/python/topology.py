@@ -16,11 +16,7 @@ import os
 import uuid
 
 from heron.proto import topology_pb2
-from heron.common.src.python.utils.misc import PythonSerializer
-
-import heron.common.src.python.constants as constants
-
-from .component import HeronComponentSpec
+from . import constants, HeronComponentSpec, default_serializer
 
 class TopologyType(type):
   """Metaclass to define a Heron topology in Python"""
@@ -114,7 +110,6 @@ class TopologyType(type):
   def get_topology_config_protobuf(mcs, class_dict):
     config = topology_pb2.Config()
     conf_dict = class_dict['_topo_config']
-    config_serializer = PythonSerializer()
 
     for key, value in conf_dict.iteritems():
       if isinstance(value, str):
@@ -126,7 +121,7 @@ class TopologyType(type):
         # need to serialize
         kvs = config.kvs.add()
         kvs.key = key
-        kvs.serialized_value = config_serializer.serialize(value)
+        kvs.serialized_value = default_serializer.serialize(value)
         kvs.type = topology_pb2.ConfigValueType.Value("PYTHON_SERIALIZED_VALUE")
 
     return config

@@ -17,7 +17,6 @@ import Queue
 import time
 import collections
 
-from abc import abstractmethod
 from heron.proto import topology_pb2, tuple_pb2
 from heron.common.src.python.utils.log import Log
 from heron.common.src.python.utils.tuple import TupleHelper
@@ -26,7 +25,7 @@ from heron.common.src.python.utils.misc import SerializerHelper
 
 import heron.common.src.python.constants as constants
 
-from .component import Component, HeronComponentSpec
+from .component import Component
 
 class Spout(Component):
   """The base class for all heron spouts in Python"""
@@ -54,38 +53,13 @@ class Spout(Component):
     self.immediate_acks = collections.deque()
     self.total_tuples_emitted = 0
 
-  # pylint: disable=no-member
-  @classmethod
-  def spec(cls, name=None, par=1, config=None):
-    """Register this spout to the topology and create ``HeronComponentSpec``
-
-    The usage of this method is compatible with StreamParse API, although it does not create
-    ``ShellBoltSpec`` but instead directly registers to a ``Topology`` class.
-
-    Note that this method does not take a ``outputs`` arguments because ``outputs`` should be
-    an attribute of your ``Spout`` subclass.
-
-    :type name: str
-    :param name: Name of this spout.
-    :type par: int
-    :param par: Parallelism hint for this spout.
-    :type config: dict
-    :param config: Component-specific config settings.
-    """
-    python_class_path = cls.get_python_class_path()
-
-    if hasattr(cls, 'outputs'):
-      _outputs = cls.outputs
-    else:
-      _outputs = None
-
-    return HeronComponentSpec(name, python_class_path, is_spout=True, par=par,
-                              inputs=None, outputs=_outputs, config=config)
+    # TODO: load spout impl and initialize it with this
+    self.spout_impl = None
 
   def start(self):
     context = self.pplan_helper.context
     self.spout_metrics.register_metrics(context, self.sys_config)
-    self.initialize(config=context.get_cluster_config(), context=context)
+    self.spout_impl.initialize(config=context.get_cluster_config(), context=context)
     context.invoke_hook_prepare()
 
     # prepare for custom grouping
@@ -96,18 +70,18 @@ class Spout(Component):
 
   def stop(self):
     self.pplan_helper.context.invoke_hook_cleanup()
-    self.close()
+    self.spout_impl.close()
 
     self.looper.exit_loop()
 
   def invoke_activate(self):
     Log.info("Spout is activated")
-    self.activate()
+    self.spout_impl.activate()
     self.topology_state = topology_pb2.TopologyState.Value("RUNNING")
 
   def invoke_deactivate(self):
     Log.info("Spout is deactivated")
-    self.deactivate()
+    self.spout_impl.deactivate()
     self.topology_state = topology_pb2.TopologyState.Value("PAUSED")
 
   # pylint: disable=unused-argument
@@ -229,7 +203,7 @@ class Spout(Component):
     while (self.acking_enabled and max_spout_pending > len(self.in_flight_tuples)) or \
         not self.acking_enabled:
       start_time = time.time()
-      self.next_tuple()
+      self.spout_impl.next_tuple()
       next_tuple_latency_ns = (time.time() - start_time) * constants.SEC_TO_NS
       self.spout_metrics.next_tuple(next_tuple_latency_ns)
 
@@ -354,109 +328,12 @@ class Spout(Component):
 
   def _invoke_ack(self, tuple_id, stream_id, complete_latency_ns):
     Log.debug("In invoke_ack(): Acking %s from stream: %s" % (str(tuple_id), stream_id))
-    self.ack(tuple_id)
+    self.spout_impl.ack(tuple_id)
     self.pplan_helper.context.invoke_hook_spout_ack(tuple_id, complete_latency_ns)
     self.spout_metrics.acked_tuple(stream_id, complete_latency_ns)
 
   def _invoke_fail(self, tuple_id, stream_id, fail_latency_ns):
     Log.debug("In invoke_fail(): Failing %s from stream: %s" % (str(tuple_id), stream_id))
-    self.fail(tuple_id)
+    self.spout_impl.fail(tuple_id)
     self.pplan_helper.context.invoke_hook_spout_fail(tuple_id, fail_latency_ns)
     self.spout_metrics.failed_tuple(stream_id, fail_latency_ns)
-
-  ###################################
-  # API: To be implemented by users
-  ###################################
-
-  @abstractmethod
-  def initialize(self, config, context):
-    """Called when a task for this component is initialized within a worker on the cluster
-
-    It is compatible with StreamParse API.
-    (Parameter name changed from ``storm_conf`` to ``config``)
-
-    It provides the spout with the environment in which the spout executes. Note that
-    you should NOT override ``__init__()`` for initialization of your spout, as it is
-    used internally by Heron Instance; instead, you should use this method to initialize
-    any custom instance variables or connections to data sources.
-
-    *Should be implemented by a subclass.*
-
-    :type config: dict
-    :param config: The Heron configuration for this bolt. This is the configuration provided to
-                   the topology merged in with cluster configuration on this machine.
-                   Note that types of string values in the config have been automatically converted,
-                   meaning that number strings and boolean strings are converted to appropriate
-                   types.
-    :type context: dict
-    :param context: This object can be used to get information about this task's place within the
-                    topology, including the task id and component id of this task, input and output
-                    information, etc.
-    """
-    pass
-
-  def close(self):
-    """Called when this spout is going to be shutdown
-
-    There is no guarantee that close() will be called.
-    """
-    pass
-
-  @abstractmethod
-  def next_tuple(self):
-    """When this method is called, Heron is requesting that the Spout emit tuples
-
-    It is compatible with StreamParse API.
-
-    This method should be non-blocking, so if the Spout has no tuples to emit,
-    this method should return; next_tuple(), ack(), and fail() are all called in a tight
-    loop in a single thread in the spout task. WHen there are no tuples to emit, it is
-    courteous to have next_tuple sleep for a short amount of time (like a single millisecond)
-    so as not to waste too much CPU.
-
-    **Must be implemented by a subclass, otherwise NotImplementedError is raised.**
-    """
-    raise NotImplementedError("Spout not implementing next_tuple() method")
-
-  def ack(self, tup_id):
-    """Determine that the tuple emitted by this spout with the tup_id has been fully processed
-
-    It is compatible with StreamParse API.
-
-    Heron has determined that the tuple emitted by this spout with the tup_id identifier
-    has been fully processed. Typically, an implementation of this method will take that
-    message off the queue and prevent it from being replayed.
-
-    *Should be implemented by a subclass.*
-    """
-    pass
-
-  def fail(self, tup_id):
-    """Determine that the tuple emitted by this spout with the tup_id has failed to be processed
-
-    It is compatible with StreamParse API.
-
-    The tuple emitted by this spout with the tup_id identifier has failed to be
-    fully processed. Typically, an implementation of this method will put that
-    message back on the queue to be replayed at a later time.
-
-    *Should be implemented by a subclass.*
-    """
-    pass
-
-  def activate(self):
-    """Called when a spout has been activated out of a deactivated mode
-
-    next_tuple() will be called on this spout soon. A spout can become activated
-    after having been deactivated when the topology is manipulated using the
-    `heron` client.
-    """
-    pass
-
-  def deactivate(self):
-    """Called when a spout has been deactivated
-
-    next_tuple() will not be called while a spout is deactivated.
-    The spout may or may not be reactivated in the future.
-    """
-    pass

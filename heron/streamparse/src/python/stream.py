@@ -16,7 +16,7 @@
 import collections
 
 from heron.proto import topology_pb2
-from heron.common.src.python.utils.misc import default_serializer
+from . import default_serializer
 
 class Stream(object):
   """Heron output stream
@@ -68,7 +68,6 @@ class Grouping(object):
   LOWEST = topology_pb2.Grouping.Value("LOWEST")
   NONE = topology_pb2.Grouping.Value("NONE")
   DIRECT = topology_pb2.Grouping.Value("DIRECT")
-  CUSTOM = topology_pb2.Grouping.Value("CUSTOM")
 
   # gtype should contain topology_pb2.Grouping.Value("FIELDS")
   FIELDS = collections.namedtuple('FieldGrouping', 'gtype, fields')

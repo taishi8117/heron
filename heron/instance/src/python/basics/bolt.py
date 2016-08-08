@@ -16,7 +16,6 @@
 import time
 import Queue
 
-from abc import abstractmethod
 from heron.proto import tuple_pb2
 from heron.common.src.python.utils.log import Log
 from heron.common.src.python.utils.tuple import TupleHelper, HeronTuple
@@ -25,7 +24,7 @@ from heron.common.src.python.utils.misc import SerializerHelper
 
 import heron.common.src.python.constants as constants
 
-from .component import Component, HeronComponentSpec
+from .component import Component
 
 class Bolt(Component):
   """The base class for all heron bolts in Python"""
@@ -45,51 +44,14 @@ class Bolt(Component):
     self.acking_enabled = context.get_cluster_config().get(constants.TOPOLOGY_ENABLE_ACKING, False)
     Log.info("Enable ACK: %s" % str(self.acking_enabled))
 
-  # pylint: disable=no-member
-  @classmethod
-  def spec(cls, name=None, inputs=None, par=1, config=None):
-    """Register this bolt to the topology and create ``HeronComponentSpec``
+    # TODO: load bolt_impl and initialize
+    self.bolt_impl = None
 
-    The usage of this method is compatible with StreamParse API, although it does not create
-    ``ShellBoltSpec`` but instead directly registers to a ``Topology`` class.
-
-    This method does not take a ``outputs`` argument because ``outputs`` should be
-    an attribute of your ``Spout`` subclass. Also, some ways of declaring inputs is not supported
-    in this implementation; please read the documentation below.
-
-    :type name: str
-    :param name: Name of this bolt.
-    :param inputs: Streams that feed into this Bolt.
-
-                   Two forms of this are acceptable:
-
-                   1. A `dict` mapping from ``HeronComponentSpec`` to ``Grouping``.
-                      In this case, default stream is used.
-                   2. A `dict` mapping from ``GlobalStreamId`` to ``Grouping``.
-                      This ``GlobalStreamId`` object itself is different from StreamParse, because
-                      Heron does not use thrift, although its constructor method is compatible.
-                   3. A `list` of ``HeronComponentSpec``. In this case, default stream with
-                      SHUFFLE grouping is used.
-                   4. A `list` of ``GlobalStreamId``. In this case, SHUFFLE grouping is used.
-    :type par: int
-    :param par: Parallelism hint for this spout.
-    :type config: dict
-    :param config: Component-specific config settings.
-    """
-    python_class_path = cls.get_python_class_path()
-
-    if hasattr(cls, 'outputs'):
-      _outputs = cls.outputs
-    else:
-      _outputs = None
-
-    return HeronComponentSpec(name, python_class_path, is_spout=False, par=par,
-                              inputs=inputs, outputs=_outputs, config=config)
 
   def start(self):
     context = self.pplan_helper.context
     self.bolt_metrics.register_metrics(context, self.sys_config)
-    self.initialize(config=context.get_cluster_config(), context=context)
+    self.bolt_impl.initialize(config=context.get_cluster_config(), context=context)
     context.invoke_hook_prepare()
 
     # prepare for custom grouping
@@ -140,7 +102,13 @@ class Bolt(Component):
     data_tuple = tuple_pb2.HeronDataTuple()
     data_tuple.key = 0
 
-    if custom_target_task_ids is not None:
+    if direct_task is not None:
+      if not isinstance(direct_task, int):
+        raise TypeError("direct_task argument needs to be an integer, given: %s"
+                        % str(type(direct_task)))
+      # performing emit-direct
+      data_tuple.dest_task_ids.append(direct_task)
+    elif custom_target_task_ids is not None:
       for task_id in custom_target_task_ids:
         # for custom grouping
         data_tuple.dest_task_ids.append(task_id)
@@ -228,7 +196,7 @@ class Bolt(Component):
     tup = TupleHelper.make_tuple(stream, data_tuple.key, values, roots=data_tuple.roots)
 
     deserialized_time = time.time()
-    self.process(tup)
+    self.bolt_impl.process(tup)
     execute_latency_ns = (time.time() - deserialized_time) * constants.SEC_TO_NS
     deserialize_latency_ns = (deserialized_time - start_time) * constants.SEC_TO_NS
 
@@ -237,14 +205,6 @@ class Bolt(Component):
     self.bolt_metrics.deserialize_data_tuple(stream.id, stream.component_name,
                                              deserialize_latency_ns)
     self.bolt_metrics.execute_tuple(stream.id, stream.component_name, execute_latency_ns)
-
-  @staticmethod
-  def is_tick(tup):
-    """Returns whether or not the given HeronTuple is a tick Tuple
-
-    It is compatible with StreamParse API.
-    """
-    return tup.stream == TupleHelper.TICK_TUPLE_ID
 
   def _prepare_tick_tup_timer(self):
     cluster_config = self.pplan_helper.context.get_cluster_config()
@@ -255,7 +215,7 @@ class Bolt(Component):
       def send_tick():
         tick = TupleHelper.make_tick_tuple()
         start_time = time.time()
-        self.process(tick)
+        self.bolt_impl.process(tick)
         tick_execute_latency_ns = (time.time() - start_time) * constants.SEC_TO_NS
         self.bolt_metrics.execute_tuple(tick.id, tick.component, tick_execute_latency_ns)
         self.output_helper.send_out_tuples()
@@ -263,7 +223,6 @@ class Bolt(Component):
         self._prepare_tick_tup_timer()
 
       self.looper.register_timer_task_in_sec(send_tick, tick_freq_sec)
-
 
   def ack(self, tup):
     """Indicate that processing of a Tuple has succeeded
@@ -312,52 +271,6 @@ class Bolt(Component):
     fail_latency_ns = (time.time() - tup.creation_time) * constants.SEC_TO_NS
     self.pplan_helper.context.invoke_hook_bolt_fail(tup, fail_latency_ns)
     self.bolt_metrics.failed_tuple(tup.stream, tup.component, fail_latency_ns)
-
-  ###################################
-  # API: To be implemented by users #
-  ###################################
-
-  @abstractmethod
-  def initialize(self, config, context):
-    """Called when a task for this component is initialized within a worker on the cluster
-
-    It is compatible with StreamParse API.
-    (Parameter name changed from ``storm_conf`` to ``config``)
-
-    It provides the bolt with the environment in which the bolt executes. Note that
-    you should NOT override ``__init__()`` for initialization of your bolt, as it is
-    used internally by Heron Instance; instead, you should use this method to initialize
-    any custom instance variables or connections to databases.
-
-    *Should be implemented by a subclass.*
-
-    :type config: dict
-    :param config: The Heron configuration for this bolt. This is the configuration provided to
-                   the topology merged in with cluster configuration on this machine.
-                   Note that types of string values in the config have been automatically converted,
-                   meaning that number strings and boolean strings are converted to appropriate
-                   types.
-    :type context: dict
-    :param context: This object can be used to get information about this task's place within the
-                    topology, including the task id and component id of this task, input and output
-                    information, etc.
-    """
-    pass
-
-  @abstractmethod
-  def process(self, tup):
-    """Process a single tuple of input
-
-    The Tuple object contains metadata on it about which component/stream/task it came from.
-    To emit a tuple, call ``self.emit(tuple)``.
-
-    **Must be implemented by a subclass, otherwise NotImplementedError is raised.**
-
-    :type tup: heron.common.src.python.utils.tuple.HeronTuple
-    :param tup: HeronTuple to process
-    """
-    raise NotImplementedError("Bolt not implementing process() method.")
-
 
   def cleanup(self):
     pass
