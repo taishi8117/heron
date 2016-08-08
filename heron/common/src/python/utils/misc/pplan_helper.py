@@ -23,8 +23,6 @@ import heron.common.src.python.pex_loader as pex_loader
 from .custom_grouping_helper import CustomGroupingHelper
 from .serializer import default_serializer
 
-Log = log.Log
-
 # pylint: disable=too-many-instance-attributes
 class PhysicalPlanHelper(object):
   """Helper class for accessing Physical Plan
