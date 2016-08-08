@@ -22,12 +22,12 @@ from heron.proto import topology_pb2, tuple_pb2
 from heron.common.src.python.utils.log import Log
 from heron.common.src.python.utils.tuple import TupleHelper
 from heron.common.src.python.utils.metrics import SpoutMetrics
+from heron.common.src.python.utils.misc import SerializerHelper
 
 import heron.common.src.python.constants as constants
 
 from .component import Component, HeronComponentSpec
 
-# pylint: disable=fixme
 class Spout(Component):
   """The base class for all heron spouts in Python"""
 
@@ -40,6 +40,7 @@ class Spout(Component):
 
     context = self.pplan_helper.context
     self.spout_metrics = SpoutMetrics(self.pplan_helper)
+    self.serializer = SerializerHelper.get_serializer(context)
 
     # acking related
     self.acking_enabled = context.get_cluster_config().get(constants.TOPOLOGY_ENABLE_ACKING, False)
@@ -52,8 +53,6 @@ class Spout(Component):
     self.in_flight_tuples = collections.OrderedDict()
     self.immediate_acks = collections.deque()
     self.total_tuples_emitted = 0
-
-    # TODO: custom serializer
 
   # pylint: disable=no-member
   @classmethod

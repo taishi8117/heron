@@ -21,12 +21,12 @@ from heron.proto import tuple_pb2
 from heron.common.src.python.utils.log import Log
 from heron.common.src.python.utils.tuple import TupleHelper, HeronTuple
 from heron.common.src.python.utils.metrics import BoltMetrics
+from heron.common.src.python.utils.misc import SerializerHelper
 
 import heron.common.src.python.constants as constants
 
 from .component import Component, HeronComponentSpec
 
-# pylint: disable=fixme
 class Bolt(Component):
   """The base class for all heron bolts in Python"""
 
@@ -39,6 +39,7 @@ class Bolt(Component):
     # bolt_config is auto-typed, not <str -> str> only
     context = self.pplan_helper.context
     self.bolt_metrics = BoltMetrics(self.pplan_helper)
+    self.serializer = SerializerHelper(context)
 
     # acking related
     self.acking_enabled = context.get_cluster_config().get(constants.TOPOLOGY_ENABLE_ACKING, False)

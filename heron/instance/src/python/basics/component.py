@@ -16,8 +16,7 @@
 import logging
 import uuid
 
-from heron.common.src.python.utils.misc import (PythonSerializer, OutgoingTupleHelper,
-                                                default_serializer)
+from heron.common.src.python.utils.misc import OutgoingTupleHelper, default_serializer
 from heron.proto import tuple_pb2, topology_pb2
 
 import heron.common.src.python.constants as constants
@@ -40,11 +39,9 @@ class Component(object):
   DEFAULT_STREAM_ID = Stream.DEFAULT_STREAM_ID
   make_data_tuple = lambda _: tuple_pb2.HeronDataTuple()
 
-  def __init__(self, pplan_helper, in_stream, out_stream, looper,
-               sys_config, serializer=PythonSerializer()):
+  def __init__(self, pplan_helper, in_stream, out_stream, looper, sys_config):
     self.pplan_helper = pplan_helper
     self.in_stream = in_stream
-    self.serializer = serializer
     self.output_helper = OutgoingTupleHelper(self.pplan_helper, out_stream, sys_config)
     self.looper = looper
     self.sys_config = sys_config

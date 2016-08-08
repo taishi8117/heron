@@ -27,6 +27,8 @@ class WordCount(Topology):
   config = {constants.TOPOLOGY_ENABLE_ACKING: True,
             constants.TOPOLOGY_MAX_SPOUT_PENDING: 100000000,
             constants.TOPOLOGY_AUTO_TASK_HOOKS: task_hooks,
+            constants.TOPOLOGY_SERIALIZER_CLASSNAME:
+              "heron.common.src.python.utils.misc.PythonSerializer",
             "topology.wide.config.sample": {"key1": 12, "key2": 34}}
 
   # 2 parallelism for word_spout
