@@ -246,3 +246,84 @@ class Topology(object):
     if cls.__name__ == 'Topology':
       raise ValueError("The base Topology class cannot be deployed.")
     cls.protobuf_topology.state = topology_pb2.TopologyState.Value("PAUSED")
+
+class TopologyBuilder(object):
+  """Builder for pyheron topology
+
+  This class dynamically creates a subclass of Topology with given spouts and bolts and
+  writes its definition files when ``build_and_submit()`` is called.
+  """
+  def __init__(self, name):
+    """Initialize this TopologyBuilder
+
+    :type name: str
+    :param name: topology name. if it doesn't end with 'Topology', it's added later. For example, if
+                 ``name = "WordCount"``, the topology name will be ``WordCountTopology``. Note that,
+                 "Topology" cannot be used as name.
+    """
+    assert isinstance(name, str) and name != "Topology"
+
+    if name.endswith("Topology") :
+      # remove trailing "Topology" because it is added by TopologyType metaclass
+      self.topology_name = name[:-8]
+    else:
+      self.topology_name = name
+
+    self._specs = []
+    self._topology_config = {}
+
+  def add_spec(self, *specs):
+    """Add specs to the topology
+
+    :type specs: HeronComponentSpec
+    :param specs: specs to add to the topology
+    """
+    for spec in specs:
+      if not isinstance(spec, HeronComponentSpec):
+        raise TypeError("Argument to add_spec needs to be HeronComponentSpec, given: %s"
+                        % str(spec))
+      if spec.name is None:
+        raise ValueError("TopologyBuilder cannot take a spec without name")
+      self._specs.append(spec)
+
+  def add_spout(self, name, spout_cls, par, config=None):
+    """Add a spout to the topology"""
+    spout_spec = spout_cls.spec(name=name, par=par, config=config)
+    self.add_spec(spout_spec)
+    return spout_spec
+
+  def add_bolt(self, name, bolt_cls, par, inputs, config=None):
+    """Add a bolt to the topology"""
+    bolt_spec = bolt_cls.spec(name=name, par=par, inputs=inputs, config=config)
+    self.add_spec(bolt_spec)
+    return bolt_spec
+
+  def set_config(self, config):
+    """Set topology-wide configuration to the topology
+
+    :type config: dict
+    :param config: topology-wide config
+    """
+    if not isinstance(config, dict):
+      raise TypeError("Argument to set_config needs to be dict, given: %s" % str(config))
+    self._topology_config = config
+
+  def _construct_topo_class_dict(self):
+    class_dict = {}
+
+    # specs
+    for spec in self._specs:
+      name = spec.name
+      if name in class_dict:
+        raise ValueError("Duplicate spec names: %s" % name)
+      class_dict[name] = spec
+
+    # config
+    class_dict["config"] = self._topology_config
+    return class_dict
+
+  def build_and_submit(self):
+    """Builds the topology and submits to the destination"""
+    class_dict = self._construct_topo_class_dict()
+    topo_cls = TopologyType(self.topology_name, (Topology,), class_dict)
+    topo_cls.write("/tmp/topo.defn")

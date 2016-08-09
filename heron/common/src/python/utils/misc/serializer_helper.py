@@ -13,7 +13,7 @@
 # limitations under the License.
 '''serializer_helper.py'''
 
-from heron.common.src.python.utils.misc import PythonSerializer, IHeronSerializer
+from heron.common.src.python.utils.misc import PythonSerializer
 
 import heron.common.src.python.constants as constants
 import heron.common.src.python.pex_loader as pex_loader

@@ -15,7 +15,7 @@ import heron.common.src.python.constants as constants
 
 # Load basic topology modules
 from .stream import Stream, Grouping
-from .topology import Topology
+from .topology import Topology, TopologyBuilder
 
 # Load spout and bolt
 from .bolt import Bolt

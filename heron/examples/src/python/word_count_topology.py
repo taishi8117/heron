@@ -15,7 +15,7 @@
 
 from heron.examples.src.python.word_spout import WordSpout
 from heron.examples.src.python.count_bolt import CountBolt
-from heron.streamparse.src.python import Topology, Grouping
+from heron.streamparse.src.python import Topology, Grouping, TopologyBuilder
 
 import heron.common.src.python.constants as constants
 
@@ -43,3 +43,17 @@ class WordCount(Topology):
                                       word_spout['error']: Grouping.ALL},
                               config={constants.TOPOLOGY_TICK_TUPLE_FREQ_SECS: 10,
                                       "count_bolt.specific": ["123", (12, 34)]})
+
+if __name__ == '__main__':
+  builder = TopologyBuilder("WordCountTopology")
+
+  word_spout = builder.add_spout("word_spout", WordSpout, par=2)
+  count_bolt = builder.add_bolt("count_bolt", CountBolt, par=2,
+                                inputs={word_spout: Grouping.fields('word'),
+                                        word_spout['error']: Grouping.ALL})
+
+  config = {constants.TOPOLOGY_ENABLE_ACKING: True,
+            constants.TOPOLOGY_MAX_SPOUT_PENDING: 100000000,}
+  builder.set_config(config)
+
+  builder.build_and_submit()
