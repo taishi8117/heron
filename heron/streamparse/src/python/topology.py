@@ -131,6 +131,7 @@ class TopologyType(type):
 
   @classmethod
   def init_topology(mcs, classname, class_dict):
+    """Initializes a topology protobuf"""
     if classname == 'Topology':
       # Base class can't initialize protobuf
       return
@@ -288,7 +289,7 @@ class TopologyBuilder(object):
     """
     assert name is not None and isinstance(name, str) and name != "Topology"
 
-    if name.endswith("Topology") :
+    if name.endswith("Topology"):
       # remove trailing "Topology" because it is added by TopologyType metaclass
       self.topology_name = name[:-8]
     else:
