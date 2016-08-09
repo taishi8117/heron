@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''base_spout.py'''
-from .. import HeronComponentSpec, Stream
+from ..component import HeronComponentSpec, BaseComponent
+from .. import Stream
 
-class BaseSpout(object):
-  def __init__(self, delegate):
-    self.delegate = delegate
-
+class BaseSpout(BaseComponent):
   # pylint: disable=no-member
   @classmethod
   def spec(cls, name=None, par=1, config=None):

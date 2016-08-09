@@ -13,7 +13,7 @@
 # limitations under the License.
 """module for example bolt: CountBolt"""
 from collections import Counter
-from heron.instance.src.python.basics import Bolt
+from heron.streamparse.src.python import Bolt
 
 class CountBolt(Bolt):
   """CountBolt"""

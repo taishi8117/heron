@@ -28,12 +28,12 @@ from heron.common.src.python.network import create_socket_options
 
 from heron.proto import physical_plan_pb2, stmgr_pb2
 from heron.instance.src.python.network import MetricsManagerClient, SingleThreadStmgrClient
+from heron.instance.src.python.basics import SpoutInstance, BoltInstance
 
-import heron.common.src.python.pex_loader as pex_loader
 import heron.common.src.python.constants as constants
 
 Log = log.Log
-LoadedInstance = collections.namedtuple('LoadedInstance', 'is_spout, protobuf, py_class')
+AssignedInstance = collections.namedtuple('AssignedInstance', 'is_spout, protobuf, py_class')
 
 # pylint: disable=too-many-instance-attributes
 class SingleThreadHeronInstance(object):
@@ -75,7 +75,7 @@ class SingleThreadHeronInstance(object):
                            self.out_metrics, self.socket_map, socket_options, self.sys_config)
     self.my_pplan_helper = None
 
-    # my_instance is a LoadedInstance tuple
+    # my_instance is a AssignedInstance tuple
     self.my_instance = None
     self.is_instance_started = False
 
@@ -146,33 +146,38 @@ class SingleThreadHeronInstance(object):
     self.my_pplan_helper = pplan_helper
     self.my_pplan_helper.set_topology_context(self.metrics_collector)
 
-    try:
-      if pplan_helper.is_spout:
-        # Starting a spout
-        my_spout = pplan_helper.get_my_spout()
-        Log.info("Incarnating ourselves as spout: %s with task id %s, loading from: %s"
-                 % (pplan_helper.my_component_name, str(pplan_helper.my_task_id),
-                    my_spout.comp.class_name))
+    if pplan_helper.is_spout:
+      # Starting a spout
+      my_spout = pplan_helper.get_my_spout()
+      Log.info("Incarnating ourselves as spout: %s with task id %s"
+               % (pplan_helper.my_component_name, str(pplan_helper.my_task_id)))
 
-        py_spout_instance = self.load_py_instance(True, my_spout.comp.class_name)
-        self.my_instance = LoadedInstance(is_spout=True,
+      self.in_stream. \
+        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_SPOUT_READ_QUEUE_CAPACITY])
+      self.out_stream. \
+        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_SPOUT_WRITE_QUEUE_CAPACITY])
+
+      py_spout_instance = SpoutInstance(self.my_pplan_helper, self.in_stream, self.out_stream,
+                                        self.looper, self.sys_config)
+      self.my_instance = AssignedInstance(is_spout=True,
                                           protobuf=my_spout,
                                           py_class=py_spout_instance)
-      else:
-        # Starting a bolt
-        my_bolt = pplan_helper.get_my_bolt()
-        Log.info("Incarnating ourselves as bolt: %s with task id %s, loading from: %s"
-                 % (pplan_helper.my_component_name, str(pplan_helper.my_task_id),
-                    my_bolt.comp.class_name))
+    else:
+      # Starting a bolt
+      my_bolt = pplan_helper.get_my_bolt()
+      Log.info("Incarnating ourselves as bolt: %s with task id %s"
+               % (pplan_helper.my_component_name, str(pplan_helper.my_task_id)))
 
-        py_bolt_instance = self.load_py_instance(False, my_bolt.comp.class_name)
-        self.my_instance = LoadedInstance(is_spout=False,
+      self.in_stream. \
+        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_BOLT_READ_QUEUE_CAPACITY])
+      self.out_stream. \
+        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_BOLT_WRITE_QUEUE_CAPACITY])
+
+      py_bolt_instance = BoltInstance(self.my_pplan_helper, self.in_stream, self.out_stream,
+                                      self.looper, self.sys_config)
+      self.my_instance = AssignedInstance(is_spout=False,
                                           protobuf=my_bolt,
                                           py_class=py_bolt_instance)
-    except Exception as e:
-      Log.error("Error with loading bolt/spout instance from pex file: %s" % e.message)
-      Log.error(traceback.format_exc())
-      self.looper.exit_loop()
 
     if pplan_helper.is_topology_running():
       try:
@@ -182,27 +187,6 @@ class SingleThreadHeronInstance(object):
         Log.error(traceback.format_exc())
     else:
       Log.info("The instance is deployed in deactivated state")
-
-  def load_py_instance(self, is_spout, python_class_name):
-    pex_loader.load_pex(self.topo_pex_file_abs_path)
-    if is_spout:
-      spout_class = pex_loader.import_and_get_class(self.topo_pex_file_abs_path, python_class_name)
-      my_spout = spout_class(self.my_pplan_helper, self.in_stream, self.out_stream,
-                             self.looper, self.sys_config)
-      self.in_stream.\
-        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_SPOUT_READ_QUEUE_CAPACITY])
-      self.out_stream.\
-        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_SPOUT_WRITE_QUEUE_CAPACITY])
-      return my_spout
-    else:
-      bolt_class = pex_loader.import_and_get_class(self.topo_pex_file_abs_path, python_class_name)
-      my_bolt = bolt_class(self.my_pplan_helper, self.in_stream, self.out_stream,
-                           self.looper, self.sys_config)
-      self.in_stream. \
-        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_BOLT_READ_QUEUE_CAPACITY])
-      self.out_stream. \
-        register_capacity(self.sys_config[constants.INSTANCE_INTERNAL_BOLT_WRITE_QUEUE_CAPACITY])
-      return my_bolt
 
   def start_instance(self):
     try:
@@ -274,7 +258,7 @@ def main():
            " and stmgrId: " + stmgr_id + " and stmgrPort: " + stmgr_port +
            " and metricsManagerPort: " + metrics_port +
            "\n **Topology Pex file located at: " + topology_pex_file_path)
-  Log.info("System config: " + str(system_config))
+  Log.debug("System config: " + str(system_config))
 
   heron_instance = SingleThreadHeronInstance(topology_name, topology_id, instance, stmgr_port,
                                              metrics_port, topology_pex_file_path, system_config)

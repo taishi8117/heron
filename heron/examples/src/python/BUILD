@@ -9,7 +9,7 @@ pex_binary(
           "word_spout.py",
           "test_task_hook.py"],
   deps = [
-    "//heron/instance/src/python/basics:pyheron_lib"
+    "//heron/streamparse/src/python:pyheron_lib"
   ],
 )
 
@@ -19,6 +19,6 @@ pex_binary(
           "consume_bolt.py",
           "word_spout.py"],
   deps = [
-    "//heron/instance/src/python/basics:pyheron_lib"
+    "//heron/streamparse/src/python:pyheron_lib"
   ],
 )

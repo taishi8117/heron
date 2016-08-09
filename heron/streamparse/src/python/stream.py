@@ -15,8 +15,8 @@
 
 import collections
 
+from heron.common.src.python.utils.misc import default_serializer
 from heron.proto import topology_pb2
-from . import default_serializer
 
 class Stream(object):
   """Heron output stream

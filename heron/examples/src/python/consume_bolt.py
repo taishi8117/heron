@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''module for example bolt: Consume Bolt'''
-from heron.instance.src.python.basics import Bolt
+from heron.streamparse.src.python import Bolt
 
 class ConsumeBolt(Bolt):
   def initialize(self, config, context):

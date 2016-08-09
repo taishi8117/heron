@@ -15,7 +15,7 @@
 
 from heron.examples.src.python.word_spout import WordSpout
 from heron.examples.src.python.count_bolt import CountBolt
-from heron.instance.src.python.basics import Topology, Grouping
+from heron.streamparse.src.python import Topology, Grouping
 
 import heron.common.src.python.constants as constants
 

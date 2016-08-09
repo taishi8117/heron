@@ -11,16 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''component.py: module for base component (base for spout/bolt) and its spec'''
+'''base_instance.py: module for base component (base for spout/bolt) and its spec'''
 
 import logging
 
 from heron.common.src.python.utils.misc import OutgoingTupleHelper, default_serializer
 from heron.proto import tuple_pb2, topology_pb2
 
-from .stream import Stream, Grouping
+import heron.common.src.python.pex_loader as pex_loader
 
-class Component(object):
+class BaseInstance(object):
   """The base class for heron bolt/spout instance
 
   Implements the following functionality:
@@ -32,8 +32,6 @@ class Component(object):
   :ivar output_helper: Outgoing Tuple Helper
   :ivar serializer: Implementation of Heron Serializer
   """
-
-  DEFAULT_STREAM_ID = Stream.DEFAULT_STREAM_ID
   make_data_tuple = lambda _: tuple_pb2.HeronDataTuple()
 
   def __init__(self, pplan_helper, in_stream, out_stream, looper, sys_config):
@@ -81,6 +79,26 @@ class Component(object):
 
   def get_total_data_emitted_in_bytes(self):
     return self.output_helper.total_data_emitted_in_bytes
+
+  def load_py_instance(self, is_spout):
+    """Loads user defined component (spout/bolt)"""
+    try:
+      if is_spout:
+        spout_proto = self.pplan_helper.get_my_spout()
+        py_classpath = spout_proto.comp.class_name
+        self.logger.info("Loading Spout from: %s" % py_classpath)
+      else:
+        bolt_proto = self.pplan_helper.get_my_bolt()
+        py_classpath = bolt_proto.comp.class_name
+        self.logger.info("Loading Bolt from: %s" % py_classpath)
+
+      pex_loader.load_pex(self.pplan_helper.topology_pex_abs_path)
+      spbl_class = pex_loader.import_and_get_class(self.pplan_helper.topology_pex_abs_path,
+                                                   py_classpath)
+    except Exception as e:
+      spbl = "spout" if is_spout else "bolt"
+      raise RuntimeError("Error when loading a %s from pex: %s" % (spbl, e.message))
+    return spbl_class
 
   ##################################################################
   # The followings are to be implemented by Spout/Bolt independently

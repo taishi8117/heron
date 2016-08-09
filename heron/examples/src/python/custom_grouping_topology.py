@@ -13,7 +13,7 @@
 # limitations under the License.
 '''module for example topology: CustomGroupingTopology'''
 
-from heron.instance.src.python.basics import Topology, Grouping
+from heron.streamparse.src.python import Topology, Grouping
 from heron.examples.src.python.word_spout import WordSpout
 from heron.examples.src.python.consume_bolt import ConsumeBolt
 from heron.common.src.python.utils.topology import ICustomGrouping

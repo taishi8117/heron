@@ -14,7 +14,7 @@
 """module for example spout: WordSpout"""
 
 from itertools import cycle
-from heron.instance.src.python.basics import Spout, Stream
+from heron.streamparse.src.python import Spout, Stream
 
 class WordSpout(Spout):
   """WordSpout: emits a set of words repeatedly"""

@@ -11,26 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''bolt.py: module for base bolt for python topology'''
+'''bolt_instance.py: module for base bolt for python topology'''
 
 import time
 import Queue
 
-from heron.proto import tuple_pb2
 from heron.common.src.python.utils.log import Log
 from heron.common.src.python.utils.tuple import TupleHelper, HeronTuple
 from heron.common.src.python.utils.metrics import BoltMetrics
 from heron.common.src.python.utils.misc import SerializerHelper
+from heron.proto import tuple_pb2
+from heron.streamparse.src.python import Stream
 
 import heron.common.src.python.constants as constants
 
-from .component import Component
+from .base_instance import BaseInstance
 
-class Bolt(Component):
+class BoltInstance(BaseInstance):
   """The base class for all heron bolts in Python"""
 
   def __init__(self, pplan_helper, in_stream, out_stream, looper, sys_config):
-    super(Bolt, self).__init__(pplan_helper, in_stream, out_stream, looper, sys_config)
+    super(BoltInstance, self).__init__(pplan_helper, in_stream, out_stream, looper, sys_config)
 
     if self.pplan_helper.is_spout:
       raise RuntimeError("No bolt in physical plan")
@@ -38,15 +39,15 @@ class Bolt(Component):
     # bolt_config is auto-typed, not <str -> str> only
     context = self.pplan_helper.context
     self.bolt_metrics = BoltMetrics(self.pplan_helper)
-    self.serializer = SerializerHelper(context)
+    self.serializer = SerializerHelper.get_serializer(context)
 
     # acking related
     self.acking_enabled = context.get_cluster_config().get(constants.TOPOLOGY_ENABLE_ACKING, False)
     Log.info("Enable ACK: %s" % str(self.acking_enabled))
 
-    # TODO: load bolt_impl and initialize
-    self.bolt_impl = None
-
+    # load user's bolt class
+    bolt_impl_class = super(BoltInstance, self).load_py_instance(is_spout=False)
+    self.bolt_impl = bolt_impl_class(delegate=self)
 
   def start(self):
     context = self.pplan_helper.context
@@ -72,7 +73,7 @@ class Bolt(Component):
     pass
 
   # pylint: disable=unused-argument
-  def emit(self, tup, stream=Component.DEFAULT_STREAM_ID,
+  def emit(self, tup, stream=Stream.DEFAULT_STREAM_ID,
            anchors=None, direct_task=None, need_task_ids=False):
     """Emits a new tuple from this Bolt
 
@@ -134,8 +135,8 @@ class Bolt(Component):
     self.bolt_metrics.serialize_data_tuple(stream, serialize_latency_ns)
 
     # TODO: return when need_task_ids=True
-    ret = super(Bolt, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
-                                             tuple_size_in_bytes=tuple_size_in_bytes)
+    ret = super(BoltInstance, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
+                                                     tuple_size_in_bytes=tuple_size_in_bytes)
 
     self.bolt_metrics.update_emit_count(stream)
     return ret
@@ -242,7 +243,7 @@ class Bolt(Component):
         to_add = ack_tuple.roots.add()
         to_add.CopyFrom(rt)
         tuple_size_in_bytes += rt.ByteSize()
-      super(Bolt, self).admit_control_tuple(ack_tuple, tuple_size_in_bytes, True)
+      super(BoltInstance, self).admit_control_tuple(ack_tuple, tuple_size_in_bytes, True)
 
     process_latency_ns = (time.time() - tup.creation_time) * constants.SEC_TO_NS
     self.pplan_helper.context.invoke_hook_bolt_ack(tup, process_latency_ns)
@@ -266,7 +267,7 @@ class Bolt(Component):
         to_add = fail_tuple.roots.add()
         to_add.CopyFrom(rt)
         tuple_size_in_bytes += rt.ByteSize()
-      super(Bolt, self).admit_control_tuple(fail_tuple, tuple_size_in_bytes, False)
+      super(BoltInstance, self).admit_control_tuple(fail_tuple, tuple_size_in_bytes, False)
 
     fail_latency_ns = (time.time() - tup.creation_time) * constants.SEC_TO_NS
     self.pplan_helper.context.invoke_hook_bolt_fail(tup, fail_latency_ns)

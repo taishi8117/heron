@@ -13,12 +13,12 @@
 # limitations under the License.
 '''base_bolt.py'''
 
-from .. import HeronComponentSpec, Stream, TupleHelper
+from heron.common.src.python.utils.tuple import TupleHelper
 
-class BaseBolt(object):
-  def __init__(self, delegate):
-    self.delegate = delegate
+from ..component import HeronComponentSpec, BaseComponent
+from .. import Stream
 
+class BaseBolt(BaseComponent):
   # pylint: disable=no-member
   @classmethod
   def spec(cls, name=None, inputs=None, par=1, config=None):

@@ -13,15 +13,13 @@
 # limitations under the License.
 '''serializer.py: common python serializer for heron'''
 from abc import abstractmethod
-import heron.common.src.python.constants as constants
-import heron.common.src.python.pex_loader as pex_loader
 
 try:
   import cPickle as pickle
 except:
   import pickle
 
-class HeronSerializer(object):
+class IHeronSerializer(object):
   """Serializer interface for Heron"""
   @abstractmethod
   def initialize(self, config):
@@ -46,7 +44,7 @@ class HeronSerializer(object):
     """
     pass
 
-class PythonSerializer(HeronSerializer):
+class PythonSerializer(IHeronSerializer):
   """Default serializer"""
   def initialize(self, config=None):
     pass
@@ -58,26 +56,3 @@ class PythonSerializer(HeronSerializer):
     return pickle.loads(input_str)
 
 default_serializer = PythonSerializer()
-
-class SerializerHelper(object):
-  """Helper class for getting serializer for component"""
-  @staticmethod
-  def get_serializer(context):
-    """Returns a serializer for a given context"""
-    cluster_config = context.get_cluster_config()
-    serializer_clsname = cluster_config.get(constants.TOPOLOGY_SERIALIZER_CLASSNAME, None)
-    if serializer_clsname is None:
-      return PythonSerializer()
-    else:
-      try:
-        topo_pex_path = context.get_topology_pex_path()
-        pex_loader.load_pex(topo_pex_path)
-        serializer_cls = pex_loader.import_and_get_class(topo_pex_path, serializer_clsname)
-        serializer = serializer_cls()
-        assert isinstance(serializer, HeronSerializer)
-        return serializer
-      except AssertionError:
-        raise RuntimeError("Registered custom serialization not a subclass of HeronSerializer")
-      except Exception as e:
-        raise RuntimeError("Error with loading custom serializer class: %s, with error message: %s"
-                           % (serializer_clsname, e.message))

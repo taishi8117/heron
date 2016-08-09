@@ -11,27 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''spout.py: module for base spout for python topology'''
+'''spout_instance.py: module for base spout for python topology'''
 
 import Queue
 import time
 import collections
 
-from heron.proto import topology_pb2, tuple_pb2
 from heron.common.src.python.utils.log import Log
 from heron.common.src.python.utils.tuple import TupleHelper
 from heron.common.src.python.utils.metrics import SpoutMetrics
 from heron.common.src.python.utils.misc import SerializerHelper
+from heron.proto import topology_pb2, tuple_pb2
+from heron.streamparse.src.python import Stream
 
 import heron.common.src.python.constants as constants
 
-from .component import Component
+from .base_instance import BaseInstance
 
-class Spout(Component):
+class SpoutInstance(BaseInstance):
   """The base class for all heron spouts in Python"""
 
   def __init__(self, pplan_helper, in_stream, out_stream, looper, sys_config):
-    super(Spout, self).__init__(pplan_helper, in_stream, out_stream, looper, sys_config)
+    super(SpoutInstance, self).__init__(pplan_helper, in_stream, out_stream, looper, sys_config)
     self.topology_state = topology_pb2.TopologyState.Value("PAUSED")
 
     if not self.pplan_helper.is_spout:
@@ -53,8 +54,9 @@ class Spout(Component):
     self.immediate_acks = collections.deque()
     self.total_tuples_emitted = 0
 
-    # TODO: load spout impl and initialize it with this
-    self.spout_impl = None
+    # load user's spout class
+    spout_impl_class = super(SpoutInstance, self).load_py_instance(is_spout=True)
+    self.spout_impl = spout_impl_class(delegate=self)
 
   def start(self):
     context = self.pplan_helper.context
@@ -85,7 +87,7 @@ class Spout(Component):
     self.topology_state = topology_pb2.TopologyState.Value("PAUSED")
 
   # pylint: disable=unused-argument
-  def emit(self, tup, tup_id=None, stream=Component.DEFAULT_STREAM_ID,
+  def emit(self, tup, tup_id=None, stream=Stream.DEFAULT_STREAM_ID,
            direct_task=None, need_task_ids=False):
     """Emits a new tuple from this Spout
 
@@ -152,8 +154,8 @@ class Spout(Component):
     self.spout_metrics.serialize_data_tuple(stream, serialize_latency_ns)
 
     # TODO: return when need_task_ids=True
-    ret = super(Spout, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
-                                              tuple_size_in_bytes=tuple_size_in_bytes)
+    ret = super(SpoutInstance, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
+                                                      tuple_size_in_bytes=tuple_size_in_bytes)
     self.total_tuples_emitted += 1
     self.spout_metrics.update_emit_count(stream)
     return ret
