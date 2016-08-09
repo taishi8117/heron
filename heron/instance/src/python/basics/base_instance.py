@@ -14,6 +14,7 @@
 '''base_instance.py: module for base component (base for spout/bolt) and its spec'''
 
 import logging
+from abc import abstractmethod
 
 from heron.common.src.python.utils.misc import OutgoingTupleHelper
 from heron.proto import tuple_pb2
@@ -104,10 +105,12 @@ class BaseInstance(object):
   # The followings are to be implemented by Spout/Bolt independently
   ##################################################################
 
+  @abstractmethod
   def start(self):
     """Do the basic setup for Heron Instance"""
     raise NotImplementedError()
 
+  @abstractmethod
   def stop(self):
     """Do the basic clean for Heron Instance
 
@@ -115,18 +118,22 @@ class BaseInstance(object):
     """
     raise NotImplementedError()
 
+  @abstractmethod
   def process_incoming_tuples(self):
     """Should be called when a tuple was buffered into in_stream"""
     raise NotImplementedError()
 
+  @abstractmethod
   def _read_tuples_and_execute(self):
     """Read tuples from a queue and process the tuples"""
     raise NotImplementedError()
 
+  @abstractmethod
   def invoke_activate(self):
     """Activate the instance"""
     raise NotImplementedError()
 
+  @abstractmethod
   def invoke_deactivate(self):
     """Deactivate the instance"""
     raise NotImplementedError()
