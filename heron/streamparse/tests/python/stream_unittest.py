@@ -16,7 +16,7 @@
 # pylint: disable=protected-access
 import unittest
 
-from heron.instance.src.python.basics import Stream, Grouping
+from heron.streamparse.src.python.stream import Stream, Grouping
 from heron.proto import topology_pb2
 
 class StreamTest(unittest.TestCase):

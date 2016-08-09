@@ -17,8 +17,9 @@
 import unittest
 
 from heron.common.src.python.utils.misc import default_serializer
-from heron.instance.src.python.basics import Topology, HeronComponentSpec, Stream, Grouping
-from heron.instance.src.python.basics.topology import TopologyType
+from heron.streamparse.src.python import Topology, Stream, Grouping
+from heron.streamparse.src.python.component import HeronComponentSpec
+from heron.streamparse.src.python.topology import TopologyType
 from heron.proto import topology_pb2
 
 class TestSane(Topology):

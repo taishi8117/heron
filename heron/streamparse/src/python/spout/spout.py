@@ -16,7 +16,12 @@ from abc import abstractmethod
 from .base_spout import BaseSpout
 
 class Spout(BaseSpout):
-  """API for defining a spout for Heron in Python"""
+  """API for defining a spout for Heron in Python
+
+  Topology writers need to inherit this ``Spout`` class to define their own custom spout, by
+  implementing ``initialize()``, ``next_tuple()``, ``ack()`` and ``fail()`` methods.
+  In addition, ``close()``, ``activate()`` and ``deactivate()`` are available to be implemented.
+  """
 
   @abstractmethod
   def initialize(self, config, context):
@@ -68,6 +73,7 @@ class Spout(BaseSpout):
     """
     raise NotImplementedError("Spout not implementing next_tuple() method")
 
+  @abstractmethod
   def ack(self, tup_id):
     """Determine that the tuple emitted by this spout with the tup_id has been fully processed
 
@@ -81,6 +87,7 @@ class Spout(BaseSpout):
     """
     pass
 
+  @abstractmethod
   def fail(self, tup_id):
     """Determine that the tuple emitted by this spout with the tup_id has failed to be processed
 

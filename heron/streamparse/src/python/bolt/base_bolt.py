@@ -19,6 +19,18 @@ from ..component import HeronComponentSpec, BaseComponent
 from .. import Stream
 
 class BaseBolt(BaseComponent):
+  """BaseBolt class
+
+  This is the base for pyheron bolt, which wraps the implementation of publicly available methods.
+  This includes:
+    - <classmethod> spec()
+    - emit()
+    - <staticmethod> is_tick()
+    - ack()
+    - fail()
+
+  They are compatible with StreamParse API.
+  """
   # pylint: disable=no-member
   @classmethod
   def spec(cls, name=None, inputs=None, par=1, config=None):

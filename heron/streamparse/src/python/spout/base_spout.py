@@ -16,6 +16,15 @@ from ..component import HeronComponentSpec, BaseComponent
 from .. import Stream
 
 class BaseSpout(BaseComponent):
+  """BaseSpout class
+
+  This is the base for pyheron spout, which wraps the implementation of publicly available methods.
+  This includes:
+    - <classmethod> spec()
+    - emit()
+
+  They are compatible with StreamParse API.
+  """
   # pylint: disable=no-member
   @classmethod
   def spec(cls, name=None, par=1, config=None):

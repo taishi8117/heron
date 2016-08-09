@@ -16,7 +16,11 @@ from abc import abstractmethod
 from .base_bolt import BaseBolt
 
 class Bolt(BaseBolt):
-  """API for defining a bolt for Heron in Python"""
+  """API for defining a bolt for Heron in Python
+
+  Topology writers need to inherit this ``Bolt`` class to define their own custom bolt, by
+  implementing ``initialize()`` and ``process()`` methods.
+  """
 
   @abstractmethod
   def initialize(self, config, context):
@@ -25,12 +29,10 @@ class Bolt(BaseBolt):
     It is compatible with StreamParse API.
     (Parameter name changed from ``storm_conf`` to ``config``)
 
-    It provides the bolt with the environment in which the bolt executes. Note that
-    you should NOT override ``__init__()`` for initialization of your bolt, as it is
-    used internally by Heron Instance; instead, you should use this method to initialize
-    any custom instance variables or connections to databases.
-
-    *Should be implemented by a subclass.*
+    It provides the bolt with the environment in which the bolt executes.
+    Note that ``__init__()`` should not be overriden for initialization of a bolt, as it is used
+    internally by BaseBolt; instead, ``initialize()`` should be used to initialize any custom
+    variables or connection to databases.
 
     :type config: dict
     :param config: The Heron configuration for this bolt. This is the configuration provided to
