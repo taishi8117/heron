@@ -14,13 +14,19 @@
 
 # pylint: disable=missing-docstring
 # pylint: disable=protected-access
+import os
 import unittest
 
 from heron.common.src.python.utils.misc import default_serializer
-from heron.streamparse.src.python import Topology, Stream, Grouping
+from heron.streamparse.src.python import Topology, Stream, Grouping, TopologyBuilder
 from heron.streamparse.src.python.component import HeronComponentSpec
 from heron.streamparse.src.python.topology import TopologyType
 from heron.proto import topology_pb2
+
+# required environment variable
+# note that this test doesn't write anything to /tmp directory
+heron_options = "cmdline.topologydefn.tmpdirectory=/tmp,cmdline.topology.initial.state=RUNNING"
+os.environ["HERON_OPTIONS"] = heron_options
 
 class TestSane(Topology):
   config = {"topology.wide.config.1": "value",
@@ -40,6 +46,12 @@ class TestSane(Topology):
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
 class TopologyTest(unittest.TestCase):
+  def setUp(self):
+    os.environ["HERON_OPTIONS"] = heron_options
+
+  def tearDown(self):
+    os.environ.pop("HERON_OPTIONS", None)
+
   def test_sane_topology(self):
     self.assertEqual(TestSane.topology_name, "TestSaneTopology")
 
@@ -127,10 +139,7 @@ class TopologyTest(unittest.TestCase):
         self.assertEqual(in_stream.stream.component_name, "spout")
         self.assertEqual(in_stream.gtype, topology_pb2.Grouping.Value("ALL"))
 
-    # state change
     self.assertEqual(proto_topo.state, topology_pb2.TopologyState.Value("RUNNING"))
-    TestSane.deploy_deactivated()
-    self.assertEqual(proto_topo.state, topology_pb2.TopologyState.Value("PAUSED"))
 
   def test_no_spout(self):
     with self.assertRaises(ValueError):
@@ -184,3 +193,53 @@ class TopologyTest(unittest.TestCase):
     self.assertEqual(ret["key"], ['v', 'a', 'l', 'u', 'e'])
     ret = TopologyType._sanitize_config({"key": None})
     self.assertEqual(ret["key"], None)
+
+  def test_get_heron_options_from_env(self):
+    test_value = "cmdline.key.1=/tmp/directory,cmdline.with.space=hello%%%%world"
+    expecting = {"cmdline.key.1": "/tmp/directory", "cmdline.with.space": "hello world"}
+    os.environ["HERON_OPTIONS"] = test_value
+    ret = TopologyType.get_heron_options_from_env()
+    self.assertEqual(ret, expecting)
+
+    # error
+    os.environ.pop("HERON_OPTIONS")
+    with self.assertRaises(RuntimeError):
+      TopologyType.get_heron_options_from_env()
+
+class TopologyBuilderTest(unittest.TestCase):
+  def test_constructor(self):
+    builder = TopologyBuilder("WordCount")
+    self.assertEqual(builder.topology_name, "WordCount")
+
+    builder = TopologyBuilder("WordCountTopology")
+    self.assertEqual(builder.topology_name, "WordCount")
+
+    builder = TopologyBuilder("WordCountTopologyTopology")
+    self.assertEqual(builder.topology_name, "WordCountTopology")
+
+    with self.assertRaises(AssertionError):
+      TopologyBuilder("Topology")
+
+    with self.assertRaises(AssertionError):
+      TopologyBuilder(123)
+
+    with self.assertRaises(AssertionError):
+      TopologyBuilder(None)
+
+  def test_add_spec(self):
+    builder = TopologyBuilder("Test")
+
+    with self.assertRaises(ValueError):
+      builder.add_spec(HeronComponentSpec(None, "path", True, 1))
+
+    with self.assertRaises(TypeError):
+      builder.add_spec(None)
+
+    self.assertEqual(len(builder._specs), 0)
+
+    # add 10 specs
+    specs = []
+    for i in range(10):
+      specs.append(HeronComponentSpec(str(i), "path", True, 1))
+    builder.add_spec(*specs)
+    self.assertEqual(len(builder._specs), 10)

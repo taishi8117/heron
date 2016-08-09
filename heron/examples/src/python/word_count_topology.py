@@ -19,30 +19,30 @@ from heron.streamparse.src.python import Topology, Grouping, TopologyBuilder
 
 import heron.common.src.python.constants as constants
 
-class WordCount(Topology):
-  # defining task hooks
-  task_hooks = ["heron.examples.src.python.test_task_hook.TestTaskHook"]
-
-  # defining topology-wide config
-  config = {constants.TOPOLOGY_ENABLE_ACKING: True,
-            constants.TOPOLOGY_MAX_SPOUT_PENDING: 100000000,
-            constants.TOPOLOGY_AUTO_TASK_HOOKS: task_hooks,
-            constants.TOPOLOGY_SERIALIZER_CLASSNAME:
-              "heron.common.src.python.utils.misc.PythonSerializer",
-            "topology.wide.config.sample": {"key1": 12, "key2": 34}}
-
-  # 2 parallelism for word_spout
-  word_spout = WordSpout.spec(par=2)
-
-  # 2 parallelism for count_bolt.
-  # inputs from word_spout's "default" stream with field grouping and word_spout's "error"
-  # stream with all grouping.
-  # specifying component-specific config (like tick tuples)
-  count_bolt = CountBolt.spec(par=2,
-                              inputs={word_spout: Grouping.fields('word'),
-                                      word_spout['error']: Grouping.ALL},
-                              config={constants.TOPOLOGY_TICK_TUPLE_FREQ_SECS: 10,
-                                      "count_bolt.specific": ["123", (12, 34)]})
+#class WordCount(Topology):
+#  # defining task hooks
+#  task_hooks = ["heron.examples.src.python.test_task_hook.TestTaskHook"]
+#
+#  # defining topology-wide config
+#  config = {constants.TOPOLOGY_ENABLE_ACKING: True,
+#            constants.TOPOLOGY_MAX_SPOUT_PENDING: 100000000,
+#            constants.TOPOLOGY_AUTO_TASK_HOOKS: task_hooks,
+#            constants.TOPOLOGY_SERIALIZER_CLASSNAME:
+#              "heron.common.src.python.utils.misc.PythonSerializer",
+#            "topology.wide.config.sample": {"key1": 12, "key2": 34}}
+#
+#  # 2 parallelism for word_spout
+#  word_spout = WordSpout.spec(par=2)
+#
+#  # 2 parallelism for count_bolt.
+#  # inputs from word_spout's "default" stream with field grouping and word_spout's "error"
+#  # stream with all grouping.
+#  # specifying component-specific config (like tick tuples)
+#  count_bolt = CountBolt.spec(par=2,
+#                              inputs={word_spout: Grouping.fields('word'),
+#                                      word_spout['error']: Grouping.ALL},
+#                              config={constants.TOPOLOGY_TICK_TUPLE_FREQ_SECS: 10,
+#                                      "count_bolt.specific": ["123", (12, 34)]})
 
 if __name__ == '__main__':
   builder = TopologyBuilder("WordCountTopology")

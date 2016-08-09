@@ -134,6 +134,12 @@ class TopologyType(type):
     if classname == 'Topology':
       # Base class can't initialize protobuf
       return
+    heron_options = TopologyType.get_heron_options_from_env()
+    initial_state = heron_options.get("cmdline.topology.initial.state", "RUNNING")
+    tmp_directory = heron_options.get("cmdline.topologydefn.tmpdirectory", None)
+    if tmp_directory is None:
+      raise RuntimeError("Topology definition temp directory not specified")
+
     topology_name = classname + 'Topology'
     topology_id = topology_name + str(uuid.uuid4())
 
@@ -141,7 +147,7 @@ class TopologyType(type):
     topology = topology_pb2.Topology()
     topology.id = topology_id
     topology.name = topology_name
-    topology.state = topology_pb2.TopologyState.Value("RUNNING")
+    topology.state = topology_pb2.TopologyState.Value(initial_state)
     topology.topology_config.CopyFrom(TopologyType.get_topology_config_protobuf(class_dict))
 
     TopologyType.add_bolts_and_spouts(topology, class_dict)
@@ -149,6 +155,32 @@ class TopologyType(type):
     class_dict['topology_name'] = topology_name
     class_dict['topology_id'] = topology_id
     class_dict['protobuf_topology'] = topology
+    class_dict['topologydefn_tmpdir'] = tmp_directory
+    class_dict['heron_runtime_options'] = heron_options
+
+  @staticmethod
+  def get_heron_options_from_env():
+    """Retrieves heron options from environment variable HERON_OPTIONS
+    It has the following format:
+    cmdline.topologydefn.tmpdirectory=/var/folders/tmpdir,cmdline.topology.initial.state=PAUSED
+
+    In this case, the returned map will contain:
+    {"cmdline.topologydefn.tmpdirectory": "/var/folders/tmpdir",
+     "cmdline.topology.initial.state": "PAUSED"}
+
+    :return: map mapping from key to value
+    """
+    heron_options_raw = os.environ.get("HERON_OPTIONS", None)
+    if heron_options_raw is None:
+      raise RuntimeError("HERON_OPTIONS environment variable not found")
+
+    ret = {}
+    heron_opt_list = heron_options_raw.replace("%%%%", " ").split(',')
+    for opt_raw in heron_opt_list:
+      opt = opt_raw.split("=")
+      if len(opt) == 2:
+        ret[opt[0]] = opt[1]
+    return ret
 
   @classmethod
   def add_bolts_and_spouts(mcs, topology, class_dict):
@@ -227,7 +259,7 @@ class Topology(object):
 
   # pylint: disable=no-member
   @classmethod
-  def write(cls, dest):
+  def write(cls):
     """Writes the Topology .defn file to ``dest``
 
     This classmethod is meant be used by heron-cli when submitting a topology.
@@ -235,17 +267,10 @@ class Topology(object):
     if cls.__name__ == 'Topology':
       raise ValueError("The base Topology class cannot be writable")
     filename = "%s.defn" % cls.topology_name
-    path = os.path.join(dest, filename)
+    path = os.path.join(cls.topologydefn_tmpdir, filename)
 
     with open(path, 'wb') as f:
       f.write(cls.protobuf_topology.SerializeToString())
-
-  @classmethod
-  def deploy_deactivated(cls):
-    """Call this method before write() to indicate that this topology be deployed deactivated"""
-    if cls.__name__ == 'Topology':
-      raise ValueError("The base Topology class cannot be deployed.")
-    cls.protobuf_topology.state = topology_pb2.TopologyState.Value("PAUSED")
 
 class TopologyBuilder(object):
   """Builder for pyheron topology
@@ -261,7 +286,7 @@ class TopologyBuilder(object):
                  ``name = "WordCount"``, the topology name will be ``WordCountTopology``. Note that,
                  "Topology" cannot be used as name.
     """
-    assert isinstance(name, str) and name != "Topology"
+    assert name is not None and isinstance(name, str) and name != "Topology"
 
     if name.endswith("Topology") :
       # remove trailing "Topology" because it is added by TopologyType metaclass
@@ -326,4 +351,4 @@ class TopologyBuilder(object):
     """Builds the topology and submits to the destination"""
     class_dict = self._construct_topo_class_dict()
     topo_cls = TopologyType(self.topology_name, (Topology,), class_dict)
-    topo_cls.write("/tmp/topo.defn")
+    topo_cls.write()
