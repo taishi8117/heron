@@ -15,8 +15,8 @@
 
 import logging
 
-from heron.common.src.python.utils.misc import OutgoingTupleHelper, default_serializer
-from heron.proto import tuple_pb2, topology_pb2
+from heron.common.src.python.utils.misc import OutgoingTupleHelper
+from heron.proto import tuple_pb2
 
 import heron.common.src.python.pex_loader as pex_loader
 
@@ -86,11 +86,11 @@ class BaseInstance(object):
       if is_spout:
         spout_proto = self.pplan_helper.get_my_spout()
         py_classpath = spout_proto.comp.class_name
-        self.logger.info("Loading Spout from: %s" % py_classpath)
+        self.logger.info("Loading Spout from: %s", py_classpath)
       else:
         bolt_proto = self.pplan_helper.get_my_bolt()
         py_classpath = bolt_proto.comp.class_name
-        self.logger.info("Loading Bolt from: %s" % py_classpath)
+        self.logger.info("Loading Bolt from: %s", py_classpath)
 
       pex_loader.load_pex(self.pplan_helper.topology_pex_abs_path)
       spbl_class = pex_loader.import_and_get_class(self.pplan_helper.topology_pex_abs_path,

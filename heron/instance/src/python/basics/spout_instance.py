@@ -28,6 +28,7 @@ import heron.common.src.python.constants as constants
 
 from .base_instance import BaseInstance
 
+# pylint: disable=too-many-instance-attributes
 class SpoutInstance(BaseInstance):
   """The base class for all heron spouts in Python"""
 
@@ -86,7 +87,6 @@ class SpoutInstance(BaseInstance):
     self.spout_impl.deactivate()
     self.topology_state = topology_pb2.TopologyState.Value("PAUSED")
 
-  # pylint: disable=unused-argument
   def emit(self, tup, tup_id=None, stream=Stream.DEFAULT_STREAM_ID,
            direct_task=None, need_task_ids=False):
     """Emits a new tuple from this Spout
@@ -153,12 +153,15 @@ class SpoutInstance(BaseInstance):
     serialize_latency_ns = (time.time() - start_time) * constants.SEC_TO_NS
     self.spout_metrics.serialize_data_tuple(stream, serialize_latency_ns)
 
-    # TODO: return when need_task_ids=True
-    ret = super(SpoutInstance, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
-                                                      tuple_size_in_bytes=tuple_size_in_bytes)
+    super(SpoutInstance, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
+                                                tuple_size_in_bytes=tuple_size_in_bytes)
     self.total_tuples_emitted += 1
     self.spout_metrics.update_emit_count(stream)
-    return ret
+    if need_task_ids:
+      sent_task_ids = custom_target_task_ids or []
+      if direct_task is not None:
+        sent_task_ids.append(direct_task)
+      return sent_task_ids
 
   # pylint: disable=no-self-use
   def process_incoming_tuples(self):
@@ -315,6 +318,7 @@ class SpoutInstance(BaseInstance):
         # rt.key is not in in_flight_tuples -> already removed due to time-out
         return
 
+      # pylint: disable=no-member
       if tuple_info.tuple_id is not None:
         latency_ns = (time.time() - tuple_info.insertion_time) * constants.SEC_TO_NS
         if is_success:

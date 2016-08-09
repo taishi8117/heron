@@ -72,7 +72,6 @@ class BoltInstance(BaseInstance):
   def invoke_deactivate(self):
     pass
 
-  # pylint: disable=unused-argument
   def emit(self, tup, stream=Stream.DEFAULT_STREAM_ID,
            anchors=None, direct_task=None, need_task_ids=False):
     """Emits a new tuple from this Bolt
@@ -134,12 +133,15 @@ class BoltInstance(BaseInstance):
     serialize_latency_ns = (time.time() - start_time) * constants.SEC_TO_NS
     self.bolt_metrics.serialize_data_tuple(stream, serialize_latency_ns)
 
-    # TODO: return when need_task_ids=True
-    ret = super(BoltInstance, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
-                                                     tuple_size_in_bytes=tuple_size_in_bytes)
+    super(BoltInstance, self).admit_data_tuple(stream_id=stream, data_tuple=data_tuple,
+                                               tuple_size_in_bytes=tuple_size_in_bytes)
 
     self.bolt_metrics.update_emit_count(stream)
-    return ret
+    if need_task_ids:
+      sent_task_ids = custom_target_task_ids or []
+      if direct_task is not None:
+        sent_task_ids.append(direct_task)
+      return sent_task_ids
 
   def process_incoming_tuples(self):
     """Should be called when tuple was buffered into in_stream
