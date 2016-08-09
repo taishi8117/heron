@@ -15,6 +15,7 @@
 import httplib
 import json
 
+from heron.common.src.python.utils.log import Log
 from heron.streamparse.src.python import Bolt
 from . import constants as integ_constants
 
@@ -29,17 +30,27 @@ class AggregatorBolt(Bolt):
   def process(self, tup):
     self.result.append(tup.values[0])
 
-  def _post_result_to_server(self):
-    dumped = json.dumps(self.result)
+  def _post_result_to_server(self, json_result):
     conn = httplib.HTTPConnection(self.http_post_url)
-    conn.request("POST", "", dumped)
+    conn.request("POST", "", json_result)
     response = conn.getresponse()
-    if response.status != 200:
-      # try agains
-      conn.request("POST", "", dumped)
-      response = conn.getresponse()
-      if response.status != 200:
-        raise RuntimeError("Response code: %d" % response.status)
+    if response.status == 200:
+      Log.info("HTTP POST successful")
+    else:
+      Log.severe("HTTP POST failed, response code: %d, response: %s"
+                 % (response.status, response.read()))
+    return response.status
 
   def write_finished_data(self):
-    pass
+    json_result = json.dumps(self.result)
+    Log.info("Actual result: %s" % json_result)
+    Log.info("Posting actual result to %s" % self.http_post_url)
+    try:
+      response_code = self._post_result_to_server(json_result)
+      if response_code != 200:
+        # try again
+        response_code = self._post_result_to_server(json_result)
+        if response_code != 200:
+          raise RuntimeError("Response code: %d" % response_code)
+    except Exception as e:
+      raise RuntimeError("Posting result to server failed with: %s" % e.message)
