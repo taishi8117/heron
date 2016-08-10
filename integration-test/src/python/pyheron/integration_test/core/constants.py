@@ -17,4 +17,5 @@ INTEGRATION_TEST_TERMINAL = "__integration_test_mock_terminal"
 INTEGRATION_TEST_CONTROL_STREAM_ID = "__integration_test_control_stream_id"
 
 # internal config key
+MAX_EXECUTIONS = 10
 HTTP_POST_URL_KEY = "http.post.url"
