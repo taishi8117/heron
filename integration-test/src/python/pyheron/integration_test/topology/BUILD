@@ -15,6 +15,8 @@ pex_library(
 pex_binary(
   name = "pyheron_integ_topology",
   srcs = ["test_topology_main.py"],
+  main = "test_topology_main.py",
+  resources = glob(["**/resources/*.json"]),
   deps = [
     ":integ_topology_lib",
   ],

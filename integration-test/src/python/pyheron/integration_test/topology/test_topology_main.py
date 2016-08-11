@@ -25,7 +25,11 @@ def main():
     sys.exit(1)
 
   http_server_url = sys.argv[1]
-  topology_name = sys.argv[2]
+
+  # 1470884422_PyHeron_IntegrationTest_BasicOneTask_dca9bb1c-dd3b-4ea6-97dc-ea0cea265adc
+  # --> PyHeron_IntegrationTest_BasicOneTask
+  topology_name_with_uuid = sys.argv[2]
+  topology_name = '_'.join(topology_name_with_uuid.split('_')[1:-1])
 
   if topology_name not in TOPOLOGY_BUILDERS:
     print "%s not found in the list" % topology_name
