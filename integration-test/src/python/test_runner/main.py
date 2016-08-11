@@ -74,8 +74,8 @@ def runTest(topologyName, classPath, expectedResultFilePath, params):
     return "success"
   else:
     logging.error("Actual result did not match expected result")
-    logging.info("Actual result ---------- \n" + actualResult)
-    logging.info("Expected result ---------- \n" + expectedResult)
+    logging.info("Actual result ---------- \n" + str(actualResult))
+    logging.info("Expected result ---------- \n" + str(expectedResult))
     return "fail"
 
 def fetchResultFromServer(serverAddress, serverPort, topologyName):

@@ -1,0 +1,46 @@
+{
+  "heronCliPath" : "dummy_cli",
+  "cluster" : "dummy_cluster",
+  "role" : "dummy_role",
+  "env" : "dummy_env",
+  "resultsServerPort" : "80",
+  "topologyClasspathPrefix" : "",
+  "releasePackageUri" : "scheme://role/name/version",
+  "topologies": [
+    {
+      "topologyName" : "PyHeron_IntegrationTest_AllGrouping",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "all_grouping/resources/all_grouping_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_BasicOneTask",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "basic_one_task/resources/basic_one_task_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_NoneGrouping",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "none_grouping/resources/none_grouping_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_OneBoltMultiTasks",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "one_bolt_multi_tasks/resources/one_bolt_multi_tasks_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_OneSpoutBoltMultiTasks",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "one_spout_bolt_multi_tasks/resources/one_spout_bolt_multi_tasks_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_ShuffleGrouping",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "shuffle_grouping/resources/shuffle_grouping_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_OneSpoutTwoBolts",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "one_spout_two_bolts/resources/one_spout_two_bolts_result.json"
+    }
+  ]
+}

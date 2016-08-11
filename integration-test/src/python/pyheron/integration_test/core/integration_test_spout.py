@@ -109,7 +109,7 @@ class IntegrationTestSpout(Spout):
 
   def _emit_terminal_if_needed(self):
     Log.info("is_done: %s, tuples_to_complete: %s" % (self.is_done, self.tuples_to_complete))
-    if self.is_done and self.tuples_to_complete <= 0:
+    if self.is_done and self.tuples_to_complete == 0:
       Log.info("Emitting terminals to downstream")
 
     super(IntegrationTestSpout, self).emit([integ_const.INTEGRATION_TEST_TERMINAL],

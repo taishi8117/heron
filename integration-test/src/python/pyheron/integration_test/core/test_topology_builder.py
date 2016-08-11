@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''integration test topology builder'''
-from heron.streamparse.src.python import Stream, Grouping
+from heron.streamparse.src.python import Stream, Grouping, constants
 from heron.streamparse.src.python.topology import TopologyBuilder, Topology, TopologyType
 from .aggregator_bolt import AggregatorBolt
 from .integration_test_spout import IntegrationTestSpout
@@ -27,6 +27,9 @@ class TestTopologyBuilder(TopologyBuilder):
   """
   TERMINAL_BOLT_NAME = '__integration_test_aggregator_bolt'
   TERMINAL_BOLT_CLASS = AggregatorBolt
+  DEFAULT_CONFIG = {constants.TOPOLOGY_DEBUG: True,
+                    constants.TOPOLOGY_ENABLE_ACKING: True,
+                    constants.TOPOLOGY_PROJECT_NAME: "pyheron-integration-test"}
   def __init__(self, name, http_server_url):
     super(TestTopologyBuilder, self).__init__(name)
     self.output_location = "%s/%s" % (http_server_url, self.topology_name)
@@ -95,6 +98,7 @@ class TestTopologyBuilder(TopologyBuilder):
   # pylint: disable=too-many-branches
   def create_topology(self):
     """Creates an integration-test topology class"""
+    self.set_config(self.DEFAULT_CONFIG)
 
     # first add the aggregation_bolt
     # inputs will be updated later

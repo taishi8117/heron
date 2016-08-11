@@ -20,12 +20,16 @@ from .all_grouping import all_grouping_buidler
 from .none_grouping import none_grouping_builder
 from .one_bolt_multi_tasks import one_bolt_multi_tasks_builder
 from .one_spout_bolt_multi_tasks import one_spout_bolt_multi_tasks_builder
+from .shuffle_grouping import shuffle_grouping_builder
+from .one_spout_two_bolts import one_spout_two_bolts_builder
 
 TOPOLOGY_BUILDERS = {'PyHeron_IntegrationTest_BasicOneTask': basic_one_task_builder,
                      'PyHeron_IntegrationTest_AllGrouping': all_grouping_buidler,
                      'PyHeron_IntegrationTest_NoneGrouping': none_grouping_builder,
                      'PyHeron_IntegrationTest_OneBoltMultiTasks': one_bolt_multi_tasks_builder,
-                     'PyHeron_IntegrationTest_OneSpoutBoltMultiTasks': one_spout_bolt_multi_tasks_builder}
+                     'PyHeron_IntegrationTest_OneSpoutBoltMultiTasks': one_spout_bolt_multi_tasks_builder,
+                     'PyHeron_IntegrationTest_ShuffleGrouping': shuffle_grouping_builder,
+                     'PyHeron_IntegrationTest_OneSpoutTwoBolts': one_spout_two_bolts_builder}
 
 def main():
   if len(sys.argv) != 3:
