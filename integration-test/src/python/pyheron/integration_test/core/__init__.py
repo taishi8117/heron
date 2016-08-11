@@ -1,3 +1,4 @@
+"""Core modules for python topology integration tests"""
 __all__ = ['aggregator_bolt', 'constants', 'integration_test_spout', 'integration_test_bolt',
            'terminal_bolt', 'test_topology_builder']
 

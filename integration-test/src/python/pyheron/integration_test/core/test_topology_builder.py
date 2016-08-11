@@ -14,12 +14,17 @@
 '''integration test topology builder'''
 from heron.streamparse.src.python import Stream, Grouping
 from heron.streamparse.src.python.topology import TopologyBuilder, Topology, TopologyType
+from .aggregator_bolt import AggregatorBolt
 from .integration_test_spout import IntegrationTestSpout
 from .integration_test_bolt import IntegrationTestBolt
-from .aggregator_bolt import AggregatorBolt
 from . import constants as integ_const
 
 class TestTopologyBuilder(TopologyBuilder):
+  """Topology Builder for integration tests
+
+  Given spouts and bolts will be delegated by IntegrationTestSpout and IntegrationTestBolt
+  classes respectively.
+  """
   TERMINAL_BOLT_NAME = '__integration_test_aggregator_bolt'
   TERMINAL_BOLT_CLASS = AggregatorBolt
   def __init__(self, name, http_server_url):
@@ -87,6 +92,7 @@ class TestTopologyBuilder(TopologyBuilder):
     self.bolts[name] = test_spec
     return test_spec
 
+  # pylint: disable=too-many-branches
   def create_topology(self):
     """Creates an integration-test topology class"""
 
@@ -138,7 +144,6 @@ class TestTopologyBuilder(TopologyBuilder):
         self._add_all_grouping(child, parent, integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)
 
     # then connect aggregator bolt with user's terminal components
-
     # terminal_outputs are output fields for terminals, list of either str or Stream
     for terminal in terminals:
       if terminal in self.bolts:

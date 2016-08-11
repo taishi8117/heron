@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''integration test spout'''
+"""Base spout for integration tests"""
 import copy
 from heron.common.src.python.utils.log import Log
 from heron.streamparse.src.python import Spout, Stream
@@ -21,6 +21,10 @@ import heron.common.src.python.pex_loader as pex_loader
 from . import constants as integ_const
 
 class IntegrationTestSpout(Spout):
+  """Base spout for integration test
+
+  Every spout of integration test topology consists of this instance, each delegating user's spout.
+  """
   outputs = [Stream(fields=[integ_const.INTEGRATION_TEST_TERMINAL],
                     name=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)]
 
@@ -49,7 +53,8 @@ class IntegrationTestSpout(Spout):
 
     self.user_spout.initialize(config, context)
 
-  def _load_user_spout(self, pex_file, classpath):
+  @staticmethod
+  def _load_user_spout(pex_file, classpath):
     pex_loader.load_pex(pex_file)
     cls = pex_loader.import_and_get_class(pex_file, classpath)
     return cls

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Base bolt for integration tests"""
 import copy
 
 from heron.common.src.python.utils.log import Log
@@ -21,7 +22,12 @@ import heron.common.src.python.pex_loader as pex_loader
 from .terminal_bolt import TerminalBolt
 from . import constants as integ_const
 
+# pylint: disable=missing-docstring
 class IntegrationTestBolt(Bolt):
+  """Base bolt for integration test
+
+  Every bolt of integration test topology consists of this instance, each delegating user's bolt.
+  """
   outputs = [Stream(fields=[integ_const.INTEGRATION_TEST_TERMINAL],
                     name=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)]
 
@@ -58,7 +64,8 @@ class IntegrationTestBolt(Bolt):
     Log.info("Terminals to receive: %d" % self.terminal_to_receive)
     self.user_bolt.initialize(config, context)
 
-  def _load_user_bolt(self, pex_file, classpath):
+  @staticmethod
+  def _load_user_bolt(pex_file, classpath):
     pex_loader.load_pex(pex_file)
     cls = pex_loader.import_and_get_class(pex_file, classpath)
     return cls
@@ -81,8 +88,8 @@ class IntegrationTestBolt(Bolt):
 
         Log.info("Populating the terminals to downstream")
         super(IntegrationTestBolt, self).emit(
-          [integ_const.INTEGRATION_TEST_TERMINAL],
-          stream=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)
+            [integ_const.INTEGRATION_TEST_TERMINAL],
+            stream=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)
     else:
       self.current_tuple_processing = tup
       self.user_bolt.process(tup)

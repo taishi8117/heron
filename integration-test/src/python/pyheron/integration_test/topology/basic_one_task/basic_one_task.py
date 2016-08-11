@@ -20,6 +20,7 @@ from ...common.bolt import IdentityBolt
 from ...common.spout import ABSpout
 
 def basic_one_task_builder(topology_name, http_server_url):
+  """Integration test topology builder for basic one task"""
   builder = TestTopologyBuilder(topology_name, http_server_url)
   ab_spout = builder.add_spout("ab-spout", ABSpout, 1)
 

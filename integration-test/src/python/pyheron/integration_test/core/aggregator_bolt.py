@@ -21,9 +21,11 @@ from .terminal_bolt import TerminalBolt
 from . import constants as integ_constants
 
 class AggregatorBolt(TerminalBolt):
+  """Aggregator Bolt: aggregates the result of integration tests and posts it to the server"""
   # the last bolt has nothing to emit
   outputs = []
 
+  # pylint: disable=unused-argument
   def initialize(self, config, context):
     self.http_post_url = config[integ_constants.HTTP_POST_URL_KEY]
     self.result = []

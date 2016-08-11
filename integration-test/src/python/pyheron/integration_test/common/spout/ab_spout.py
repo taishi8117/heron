@@ -15,6 +15,7 @@
 
 from heron.streamparse.src.python import Spout
 
+#pylint: disable=unused-argument
 class ABSpout(Spout):
   outputs = ['word']
 
