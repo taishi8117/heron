@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''base_spout.py'''
+import copy
+
 from ..component import HeronComponentSpec, BaseComponent
 from ..stream import Stream
 
@@ -53,7 +55,8 @@ class BaseSpout(BaseComponent):
     python_class_path = "%s.%s" % (cls.__module__, cls.__name__)
 
     if hasattr(cls, 'outputs'):
-      _outputs = cls.outputs
+      # avoid modification to cls.outputs
+      _outputs = copy.copy(cls.outputs)
     else:
       _outputs = None
 

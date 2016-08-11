@@ -14,6 +14,7 @@
 '''main method for integration test topology'''
 
 import sys
+
 from .basic_one_task import basic_one_task_builder
 
 TOPOLOGY_BUILDERS = {'PyHeron_IntegrationTest_BasicOneTask': basic_one_task_builder}
@@ -28,6 +29,7 @@ def main():
 
   if topology_name not in TOPOLOGY_BUILDERS:
     print "%s not found in the list" % topology_name
+    sys.exit(2)
 
   builder = TOPOLOGY_BUILDERS[topology_name]
   topo_class = builder(http_server_url)

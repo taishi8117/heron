@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''integration test spout'''
-
+import copy
 from heron.common.src.python.utils.log import Log
 from heron.streamparse.src.python import Spout, Stream
 from heron.streamparse.src.python.component import HeronComponentSpec
@@ -29,7 +29,8 @@ class IntegrationTestSpout(Spout):
     python_class_path = "%s.%s" % (cls.__module__, cls.__name__)
 
     config[integ_const.USER_SPOUT_CLASSPATH] = user_spout_classpath
-    _outputs = cls.outputs
+    # avoid modification to cls.outputs
+    _outputs = copy.copy(cls.outputs)
     if user_output_fields is not None:
       _outputs.extend(user_output_fields)
     return HeronComponentSpec(name, python_class_path, is_spout=True, par=par,
@@ -40,8 +41,6 @@ class IntegrationTestSpout(Spout):
     if user_spout_classpath is None:
       raise RuntimeError("User defined integration test spout was not found")
     user_spout_cls = self._load_user_spout(context.get_topology_pex_path(), user_spout_classpath)
-    user_outputs = user_spout_cls.outputs or []
-    IntegrationTestSpout.outputs.extend(user_outputs)
     self.user_spout = user_spout_cls(delegate=self)
 
     self.max_executions = integ_const.MAX_EXECUTIONS

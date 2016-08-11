@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import copy
 
 from heron.common.src.python.utils.log import Log
 from heron.streamparse.src.python import Bolt, Stream
@@ -28,7 +29,8 @@ class IntegrationTestBolt(Bolt):
   def spec(cls, name, par, inputs, config, user_bolt_classpath, user_output_fields=None):
     python_class_path = "%s.%s" % (cls.__module__, cls.__name__)
     config[integ_const.USER_BOLT_CLASSPATH] = user_bolt_classpath
-    _outputs = cls.outputs
+    # avoid modification to cls.outputs
+    _outputs = copy.copy(cls.outputs)
     if user_output_fields is not None:
       _outputs.extend(user_output_fields)
     return HeronComponentSpec(name, python_class_path, is_spout=False, par=par,
@@ -39,8 +41,6 @@ class IntegrationTestBolt(Bolt):
     if user_bolt_classpath is None:
       raise RuntimeError("User defined integration bolt was not found")
     user_bolt_cls = self._load_user_bolt(context.get_topology_pex_path(), user_bolt_classpath)
-    user_outputs = user_bolt_cls.outputs or []
-    IntegrationTestBolt.outputs.extend(user_outputs)
     self.user_bolt = user_bolt_cls(delegate=self)
 
     upstream_components = set()

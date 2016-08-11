@@ -35,7 +35,7 @@ class TestTopologyBuilder(TopologyBuilder):
 
   def add_spout(self, name, spout_cls, par, config=None, optional_outputs=None):
     """Add an integration-test sput"""
-    user_spec = spout_cls.spec(name, par, config)
+    user_spec = spout_cls.spec(name)
     spout_classpath = user_spec.python_class_path
 
     if hasattr(spout_cls, 'outputs'):
@@ -46,7 +46,12 @@ class TestTopologyBuilder(TopologyBuilder):
     if optional_outputs is not None:
       user_outputs.extend(optional_outputs)
 
-    test_spec = IntegrationTestSpout.spec(name, par, config,
+    if config is None:
+      _config = {}
+    else:
+      _config = config
+
+    test_spec = IntegrationTestSpout.spec(name, par, _config,
                                           user_spout_classpath=spout_classpath,
                                           user_output_fields=user_outputs)
     self.add_spec(test_spec)
@@ -59,7 +64,7 @@ class TestTopologyBuilder(TopologyBuilder):
     Only dict based inputs is supported
     """
     assert isinstance(inputs, dict)
-    user_spec = bolt_cls.spec(name, par, config)
+    user_spec = bolt_cls.spec(name)
     bolt_classpath = user_spec.python_class_path
 
     if hasattr(bolt_cls, 'outputs'):
@@ -70,7 +75,12 @@ class TestTopologyBuilder(TopologyBuilder):
     if optional_outputs is not None:
       user_outputs.extend(optional_outputs)
 
-    test_spec = IntegrationTestBolt.spec(name, par, inputs, config,
+    if config is None:
+      _config = {}
+    else:
+      _config = config
+
+    test_spec = IntegrationTestBolt.spec(name, par, inputs, _config,
                                          user_bolt_classpath=bolt_classpath,
                                          user_output_fields=user_outputs)
     self.add_spec(test_spec)
@@ -83,7 +93,7 @@ class TestTopologyBuilder(TopologyBuilder):
     # first add the aggregation_bolt
     # inputs will be updated later
     aggregator_config = {integ_const.HTTP_POST_URL_KEY: self.output_location}
-    self.add_bolt(self.TERMINAL_BOLT_NAME, self.terminal_bolt, 1,
+    self.add_bolt(self.TERMINAL_BOLT_NAME, self.TERMINAL_BOLT_CLASS, 1,
                   inputs={}, config=aggregator_config)
 
     # building a graph directed from children to parents, by looking only on bolts
@@ -128,7 +138,6 @@ class TestTopologyBuilder(TopologyBuilder):
         self._add_all_grouping(child, parent, integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)
 
     # then connect aggregator bolt with user's terminal components
-    outstream_list = []
 
     # terminal_outputs are output fields for terminals, list of either str or Stream
     for terminal in terminals:

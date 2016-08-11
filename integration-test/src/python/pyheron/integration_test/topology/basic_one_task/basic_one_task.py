@@ -15,16 +15,17 @@
 
 from heron.streamparse.src.python import Grouping
 
-from ..core import TestTopologyBuilder
-from ..common.bolt import IdentityBolt
-from ..common.spout import ABSpout
+from ...core import TestTopologyBuilder
+from ...common.bolt import IdentityBolt
+from ...common.spout import ABSpout
 
 def basic_one_task_builder(http_server_url):
   builder = TestTopologyBuilder("BasicOneTask", http_server_url)
   ab_spout = builder.add_spout("ab-spout", ABSpout, 1)
 
-  builder.add_bolt("identity-bolt", IdentityBolt, 1,
+  builder.add_bolt("identity-bolt", IdentityBolt,
                    inputs={ab_spout: Grouping.SHUFFLE},
+                   par=1,
                    optional_outputs=['word'])
 
   return builder.create_topology()
