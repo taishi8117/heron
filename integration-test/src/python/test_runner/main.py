@@ -154,11 +154,26 @@ def runAllTests(conf, args):
   successes = []
   failures = []
   timestamp = str(int(time.time()))
-  total = len(conf["topologies"])
+
+  if args.testsJarPath.endswith(".jar"):
+    test_topologies = conf["javaTopologies"]
+    pkg_type = "jar"
+  elif args.testsJarPath.endswith(".pex"):
+    test_topologies = conf["pythonTopologies"]
+    pkg_type = "pex"
+  else:
+    raise ValueError("Unrecognized binary file type: %s" % args.testsJarPath)
+
+  total = len(test_topologies)
   current = 1
-  for topologyConf in conf["topologies"]:
+
+  for topologyConf in test_topologies:
     topologyName = ("%s_%s_%s") % (timestamp, topologyConf["topologyName"], str(uuid.uuid4()))
-    classPath = conf["topologyClasspathPrefix"] + topologyConf["classPath"]
+    if pkg_type == 'pex':
+      classPath = topologyConf["classPath"]
+    else:
+      # integration tests for Jar
+      classPath = conf["topologyClasspathPrefix"] + topologyConf["classPath"]
     expectedResultFilePath = args.topologiesPath + "/" + topologyConf["expectedResultRelativePath"]
 
     logging.info("==== Starting test %s of %s: %s ====", current, total, topologyName)
