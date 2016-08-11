@@ -19,7 +19,7 @@ from heron.streamparse.src.python import Bolt, Stream
 from heron.streamparse.src.python.component import HeronComponentSpec
 import heron.common.src.python.pex_loader as pex_loader
 
-from .terminal_bolt import TerminalBolt
+from .batch_bolt import BatchBolt
 from . import constants as integ_const
 
 # pylint: disable=missing-docstring
@@ -82,7 +82,7 @@ class IntegrationTestBolt(Bolt):
     if stream_id == integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID:
       self.terminal_to_receive -= 1
       if self.is_done:
-        if isinstance(self.user_bolt, TerminalBolt):
+        if isinstance(self.user_bolt, BatchBolt):
           Log.info("Invoke bolt to do finish batch")
           self.user_bolt.finish_batch()
 

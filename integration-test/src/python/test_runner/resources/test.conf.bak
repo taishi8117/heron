@@ -41,6 +41,31 @@
       "topologyName" : "PyHeron_IntegrationTest_OneSpoutTwoBolts",
       "classPath"    : "-",
       "expectedResultRelativePath" : "one_spout_two_bolts/resources/one_spout_two_bolts_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_OneSpoutTwoBolts",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "one_spout_two_bolts/resources/one_spout_two_bolts_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_OneSpoutMultiTasks",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "one_spout_multi_tasks/resources/one_spout_multi_tasks_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_MultiSpoutsMultiTasks",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "multi_spouts_multi_tasks/resources/multi_spouts_multi_tasks_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_FieldsGrouping",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "fields_grouping/resources/fields_grouping_result.json"
+    },
+    {
+      "topologyName" : "PyHeron_IntegrationTest_BoltDoubleEmitTuples",
+      "classPath"    : "-",
+      "expectedResultRelativePath" : "bolt_double_emit_tuples/resources/bolt_double_emit_tuples_result.json"
     }
   ]
 }

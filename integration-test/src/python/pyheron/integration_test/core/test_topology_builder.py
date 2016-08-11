@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''integration test topology builder'''
+import copy
 from heron.streamparse.src.python import Stream, Grouping, constants
 from heron.streamparse.src.python.topology import TopologyBuilder, Topology, TopologyType
 from .aggregator_bolt import AggregatorBolt
@@ -33,6 +34,7 @@ class TestTopologyBuilder(TopologyBuilder):
   def __init__(self, name, http_server_url):
     super(TestTopologyBuilder, self).__init__(name)
     self.output_location = "%s/%s" % (http_server_url, self.topology_name)
+    self.set_config(self.DEFAULT_CONFIG)
 
     # map <name -> spout's component spec>
     self.spouts = {}
@@ -41,7 +43,8 @@ class TestTopologyBuilder(TopologyBuilder):
     # map <name -> set of parents>
     self.prev = {}
 
-  def add_spout(self, name, spout_cls, par, config=None, optional_outputs=None):
+  def add_spout(self, name, spout_cls, par, config=None,
+                optional_outputs=None, max_executions=None):
     """Add an integration-test sput"""
     user_spec = spout_cls.spec(name)
     spout_classpath = user_spec.python_class_path
@@ -57,7 +60,10 @@ class TestTopologyBuilder(TopologyBuilder):
     if config is None:
       _config = {}
     else:
-      _config = config
+      _config = copy.copy(config)
+
+    if max_executions is not None:
+      _config[integ_const.USER_MAX_EXECUTIONS] = max_executions
 
     test_spec = IntegrationTestSpout.spec(name, par, _config,
                                           user_spout_classpath=spout_classpath,
@@ -98,7 +104,6 @@ class TestTopologyBuilder(TopologyBuilder):
   # pylint: disable=too-many-branches
   def create_topology(self):
     """Creates an integration-test topology class"""
-    self.set_config(self.DEFAULT_CONFIG)
 
     # first add the aggregation_bolt
     # inputs will be updated later

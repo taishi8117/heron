@@ -11,15 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''interface for terminal bolt'''
+"""interface for batch bolt"""
 from abc import abstractmethod
-from .batch_bolt import BatchBolt
+from heron.streamparse.src.python import Bolt
 
-class TerminalBolt(BatchBolt):
-  """Terminal bolt interface for integration test"""
-  def finish_batch(self):
-    self.write_finished_data()
-
+class BatchBolt(Bolt):
+  """Batch bolt interface for integration test"""
   @abstractmethod
-  def write_finished_data(self):
+  def finish_batch(self):
     pass

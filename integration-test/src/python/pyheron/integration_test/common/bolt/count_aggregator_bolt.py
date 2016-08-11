@@ -1,4 +1,4 @@
-# Copyright 2016 Twitter. All rights reserved.
+# copyright 2016 twitter. all rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,15 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''interface for terminal bolt'''
-from abc import abstractmethod
-from .batch_bolt import BatchBolt
+"""Count aggregator bolt"""
 
-class TerminalBolt(BatchBolt):
-  """Terminal bolt interface for integration test"""
+from ...core import BatchBolt
+
+class CountAggregatorBolt(BatchBolt):
+  """Bolt to count how many different words received"""
+  outputs = ['sum']
+
+  # pylint: disable=unused-argument
+  def initialize(self, config, context):
+    self.sum = 0
+
+  def process(self, tup):
+    self.sum += int(tup.values[0])
+
   def finish_batch(self):
-    self.write_finished_data()
-
-  @abstractmethod
-  def write_finished_data(self):
-    pass
+    self.logger.info("In finish batch, emitting: %d" % self.sum)
+    self.emit([self.sum])

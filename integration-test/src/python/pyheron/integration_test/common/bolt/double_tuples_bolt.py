@@ -1,4 +1,4 @@
-# Copyright 2016 Twitter. All rights reserved.
+# copyright 2016 twitter. all rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,15 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''interface for terminal bolt'''
-from abc import abstractmethod
-from .batch_bolt import BatchBolt
+'''double tuples bolt'''
 
-class TerminalBolt(BatchBolt):
-  """Terminal bolt interface for integration test"""
-  def finish_batch(self):
-    self.write_finished_data()
+from heron.streamparse.src.python import Bolt
 
-  @abstractmethod
-  def write_finished_data(self):
-    pass
+class DoubleTuplesBolt(Bolt):
+  """Double tuples bolt
+
+  Output fields are not declared within this class, so they need to be
+  provided from ``optional_outputs`` parameter in ``spec()``.
+  """
+  # output fields need to be set by topology
+  def process(self, tup):
+    self.emit(tup.values)
+    self.emit(tup.values)

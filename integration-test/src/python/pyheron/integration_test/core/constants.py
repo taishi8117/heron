@@ -20,5 +20,8 @@ INTEGRATION_TEST_CONTROL_STREAM_ID = "__integration_test_control_stream_id"
 MAX_EXECUTIONS = 10
 HTTP_POST_URL_KEY = "http.post.url"
 
+# user defined config key
 USER_SPOUT_CLASSPATH = "user.spout.classpath"
 USER_BOLT_CLASSPATH = "user.bolt.classpath"
+# user defined max executions
+USER_MAX_EXECUTIONS = "user.max.exec"
