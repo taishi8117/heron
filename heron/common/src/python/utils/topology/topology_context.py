@@ -120,6 +120,29 @@ class TopologyContext(dict):
     collector = self.get_metrics_collector()
     collector.register_metric(name, metric, time_bucket_in_sec)
 
+  def get_sources(self, component_id):
+    """Returns the declared inputs to specified component
+
+    :return: map <streamId protobuf -> gtype>, or None if not found
+    """
+    if component_id in self[self.INPUTS]:
+      ret = {}
+      for istream in self[self.INPUTS].get(component_id):
+        ret[istream.stream] = istream.gtype
+    else:
+      return None
+
+  def get_this_sources(self):
+    return self.get_sources(self.component_id)
+
+  def get_component_tasks(self, component_id):
+    """Returns the task ids allocated for the given component id"""
+    ret = []
+    for task_id, comp_id in self[self.TASK_TO_COMPONENT_MAP].iteritems():
+      if comp_id == component_id:
+        ret.append(task_id)
+    return ret
+
   ########################################
 
   @classmethod

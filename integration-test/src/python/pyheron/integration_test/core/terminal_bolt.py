@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''constants.py: constants for integration test for pyheron'''
-INTEGRATION_TEST_MOCK_MESSAGE_ID = "__integration_test_mock_message_id"
-INTEGRATION_TEST_TERMINAL = "__integration_test_mock_terminal"
-INTEGRATION_TEST_CONTROL_STREAM_ID = "__integration_test_control_stream_id"
+'''interface for terminal bolt'''
+from abc import abstractmethod
+from heron.streamparse.src.python import Bolt
 
-# internal config key
-MAX_EXECUTIONS = 10
-HTTP_POST_URL_KEY = "http.post.url"
+class TerminalBolt(Bolt):
+  """Terminal bolt interface for integration test"""
+  def finish_batch(self):
+    self.write_finished_data()
 
-USER_SPOUT_CLASSPATH = "user.spout.classpath"
-USER_BOLT_CLASSPATH = "user.bolt.classpath"
+  @abstractmethod
+  def write_finished_data(self):
+    pass

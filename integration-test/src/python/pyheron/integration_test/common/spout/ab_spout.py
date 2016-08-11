@@ -11,14 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''constants.py: constants for integration test for pyheron'''
-INTEGRATION_TEST_MOCK_MESSAGE_ID = "__integration_test_mock_message_id"
-INTEGRATION_TEST_TERMINAL = "__integration_test_mock_terminal"
-INTEGRATION_TEST_CONTROL_STREAM_ID = "__integration_test_control_stream_id"
+'''ABSpout for integration test'''
 
-# internal config key
-MAX_EXECUTIONS = 10
-HTTP_POST_URL_KEY = "http.post.url"
+from heron.streamparse.src.python import Spout
 
-USER_SPOUT_CLASSPATH = "user.spout.classpath"
-USER_BOLT_CLASSPATH = "user.bolt.classpath"
+class ABSpout(Spout):
+  outputs = ['word']
+
+  def initialize(self, config, context):
+    self.to_send = ["A", "B"]
+    self.emitted = 0
+
+  def next_tuple(self):
+    word = self.to_send[self.emitted % len(self.to_send)]
+    self.emitted += 1
+    self.emit([word])

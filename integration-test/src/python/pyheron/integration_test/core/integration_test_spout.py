@@ -15,17 +15,45 @@
 
 from heron.common.src.python.utils.log import Log
 from heron.streamparse.src.python import Spout, Stream
-from . import constants as integ_constants
+from heron.streamparse.src.python.component import HeronComponentSpec
+import heron.common.src.python.pex_loader as pex_loader
+
+from . import constants as integ_const
 
 class IntegrationTestSpout(Spout):
-  # TODO: make sure this is added to topology
-  outputs = [Stream(fields=[integ_constants.INTEGRATION_TEST_TERMINAL],
-                    name=integ_constants.INTEGRATION_TEST_CONTROL_STREAM_ID)]
+  outputs = [Stream(fields=[integ_const.INTEGRATION_TEST_TERMINAL],
+                    name=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)]
+
+  @classmethod
+  def spec(cls, name, par, config, user_spout_classpath, user_output_fields=None):
+    python_class_path = "%s.%s" % (cls.__module__, cls.__name__)
+
+    config[integ_const.USER_SPOUT_CLASSPATH] = user_spout_classpath
+    _outputs = cls.outputs
+    if user_output_fields is not None:
+      _outputs.extend(user_output_fields)
+    return HeronComponentSpec(name, python_class_path, is_spout=True, par=par,
+                              inputs=None, outputs=_outputs, config=config)
 
   def initialize(self, config, context):
-    self.max_executions = integ_constants.MAX_EXECUTIONS
+    user_spout_classpath = config.get(integ_const.USER_SPOUT_CLASSPATH, None)
+    if user_spout_classpath is None:
+      raise RuntimeError("User defined integration test spout was not found")
+    user_spout_cls = self._load_user_spout(context.get_topology_pex_path(), user_spout_classpath)
+    user_outputs = user_spout_cls.outputs or []
+    IntegrationTestSpout.outputs.extend(user_outputs)
+    self.user_spout = user_spout_cls(delegate=self)
+
+    self.max_executions = integ_const.MAX_EXECUTIONS
     assert self.max_executions > 0
     self.tuples_to_complete = 0
+
+    self.user_spout.initialize(config, context)
+
+  def _load_user_spout(self, pex_file, classpath):
+    pex_loader.load_pex(pex_file)
+    cls = pex_loader.import_and_get_class(pex_file, classpath)
+    return cls
 
   @property
   def is_done(self):
@@ -38,24 +66,47 @@ class IntegrationTestSpout(Spout):
     self.max_executions -= 1
     Log.info("max executions: %d" % self.max_executions)
 
+    self.user_spout.next_tuple()
+
     if self.is_done:
       self._emit_terminal_if_necessary()
       Log.info("This topology is finished.")
 
   def ack(self, tup_id):
-    pass
+    Log.info("Received an ack with tuple id: %s" % str(tup_id))
+    self.tuples_to_complete -= 1
+    if tup_id != integ_const.INTEGRATION_TEST_MOCK_MESSAGE_ID:
+      self.user_spout.ack(tup_id)
+    self._emit_terminal_if_needed()
 
   def fail(self, tup_id):
-    pass
+    Log.info("Received a fail message with tuple id: %s" % str(tup_id))
+    self.tuples_to_complete -= 1
+    if tup_id != integ_const.INTEGRATION_TEST_MOCK_MESSAGE_ID:
+      self.user_spout.fail(tup_id)
+    self._emit_terminal_if_needed()
 
   def emit(self, tup, tup_id=None, stream=Stream.DEFAULT_STREAM_ID,
-           direct_task=None, need_task_ids=False):
+           direct_task=None, need_task_ids=None):
+    """Emits from this integration test spout
+
+    Overriden method which will be called when user's spout calls emit()
+    """
+    # if is_control True -> control stream should not count
     self.tuples_to_complete += 1
 
     if tup_id is None:
       Log.info("Add tup_id for tuple: %s" % str(tup))
-      _tup_id = integ_constants.INTEGRATION_TEST_MOCK_MESSAGE_ID
+      _tup_id = integ_const.INTEGRATION_TEST_MOCK_MESSAGE_ID
     else:
       _tup_id = tup_id
 
     super(IntegrationTestSpout, self).emit(tup, _tup_id, stream, direct_task, need_task_ids)
+
+  def _emit_terminal_if_needed(self):
+    Log.info("is_done: %s, tuples_to_complete: %s" % (self.is_done, self.tuples_to_complete))
+    if self.is_done and self.tuples_to_complete <= 0:
+      Log.info("Emitting terminals to downstream")
+
+    super(IntegrationTestSpout, self).emit([integ_const.INTEGRATION_TEST_TERMINAL],
+                                           stream=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)

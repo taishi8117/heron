@@ -1,4 +1,4 @@
-# Copyright 2016 Twitter. All rights reserved.
+# copyright 2016 twitter. all rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''constants.py: constants for integration test for pyheron'''
-INTEGRATION_TEST_MOCK_MESSAGE_ID = "__integration_test_mock_message_id"
-INTEGRATION_TEST_TERMINAL = "__integration_test_mock_terminal"
-INTEGRATION_TEST_CONTROL_STREAM_ID = "__integration_test_control_stream_id"
+'''identity bolt'''
 
-# internal config key
-MAX_EXECUTIONS = 10
-HTTP_POST_URL_KEY = "http.post.url"
+from heron.streamparse.src.python import Bolt
 
-USER_SPOUT_CLASSPATH = "user.spout.classpath"
-USER_BOLT_CLASSPATH = "user.bolt.classpath"
+class IdentityBolt(Bolt):
+  """Identity Bolt"""
+  # output fields need to be set by topology
+  def process(self, tup):
+    self.emit(tup.values)

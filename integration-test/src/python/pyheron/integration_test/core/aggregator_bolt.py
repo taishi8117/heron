@@ -16,10 +16,10 @@ import httplib
 import json
 
 from heron.common.src.python.utils.log import Log
-from heron.streamparse.src.python import Bolt
+from .terminal_bolt import TerminalBolt
 from . import constants as integ_constants
 
-class AggregatorBolt(Bolt):
+class AggregatorBolt(TerminalBolt):
   # the last bolt has nothing to emit
   outputs = []
 
