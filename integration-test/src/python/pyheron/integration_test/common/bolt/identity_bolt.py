@@ -16,7 +16,11 @@
 from heron.streamparse.src.python import Bolt
 
 class IdentityBolt(Bolt):
-  """Identity Bolt"""
+  """Identity Bolt
+
+  Output fields are not declared within this class, so they need to be
+  provided from ``optional_outputs`` parameter in ``spec()``.
+  """
   # output fields need to be set by topology
   def process(self, tup):
     self.emit(tup.values)
