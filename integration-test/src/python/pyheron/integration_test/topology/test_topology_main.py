@@ -36,7 +36,7 @@ def main():
     sys.exit(2)
 
   builder = TOPOLOGY_BUILDERS[topology_name]
-  topo_class = builder(http_server_url)
+  topo_class = builder(topology_name_with_uuid, http_server_url)
   topo_class.write()
 
 if __name__ == '__main__':

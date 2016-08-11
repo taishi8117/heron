@@ -14,6 +14,7 @@
 '''aggregator_bolt.py'''
 import httplib
 import json
+from urlparse import urlparse
 
 from heron.common.src.python.utils.log import Log
 from .terminal_bolt import TerminalBolt
@@ -26,13 +27,15 @@ class AggregatorBolt(TerminalBolt):
   def initialize(self, config, context):
     self.http_post_url = config[integ_constants.HTTP_POST_URL_KEY]
     self.result = []
+    Log.info("HTTP post url: %s" % self.http_post_url)
+    self.parsed_url = urlparse(self.http_post_url)
 
   def process(self, tup):
     self.result.append(tup.values[0])
 
   def _post_result_to_server(self, json_result):
-    conn = httplib.HTTPConnection(self.http_post_url)
-    conn.request("POST", "", json_result)
+    conn = httplib.HTTPConnection(self.parsed_url.netloc)
+    conn.request("POST", self.parsed_url.path, json_result)
     response = conn.getresponse()
     if response.status == 200:
       Log.info("HTTP POST successful")

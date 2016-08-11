@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 '''module for example topology: WordCountTopology'''
+import sys
 
 from heron.examples.src.python.word_spout import WordSpout
 from heron.examples.src.python.count_bolt import CountBolt
@@ -45,7 +46,10 @@ import heron.common.src.python.constants as constants
 #                                      "count_bolt.specific": ["123", (12, 34)]})
 
 if __name__ == '__main__':
-  builder = TopologyBuilder("WordCountTopology")
+  if len(sys.argv) != 2:
+    print "Topology's name is not specified"
+    sys.exit(1)
+  builder = TopologyBuilder(name=sys.argv[1])
 
   word_spout = builder.add_spout("word_spout", WordSpout, par=2)
   count_bolt = builder.add_bolt("count_bolt", CountBolt, par=2,

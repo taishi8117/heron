@@ -141,7 +141,7 @@ class TopologyType(type):
     if tmp_directory is None:
       raise RuntimeError("Topology definition temp directory not specified")
 
-    topology_name = classname + 'Topology'
+    topology_name = heron_options.get("cmdline.topology.name", classname)
     topology_id = topology_name + str(uuid.uuid4())
 
     # create protobuf
@@ -283,17 +283,11 @@ class TopologyBuilder(object):
     """Initialize this TopologyBuilder
 
     :type name: str
-    :param name: topology name. if it doesn't end with 'Topology', it's added later. For example, if
-                 ``name = "WordCount"``, the topology name will be ``WordCountTopology``. Note that,
-                 "Topology" cannot be used as name.
+    :param name: topology name
     """
     assert name is not None and isinstance(name, str) and name != "Topology"
 
-    if name.endswith("Topology"):
-      # remove trailing "Topology" because it is added by TopologyType metaclass
-      self.topology_name = name[:-8]
-    else:
-      self.topology_name = name
+    self.topology_name = name
 
     self._specs = []
     self._topology_config = {}

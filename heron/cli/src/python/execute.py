@@ -128,7 +128,14 @@ def heron_pex(topology_pex, topology_class_name, args=None):
   else:
     try:
       # loading topology from Topology's subclass (no main method)
+
+      # to support specifying the name of topology
+      Log.debug("args: %s" % args)
+      if args is not None and isinstance(args, (list, tuple)) and len(args) > 0:
+        opts.set_config('cmdline.topology.name', args[0])
+
       os.environ["HERON_OPTIONS"] = opts.get_heron_config()
+      Log.debug("Heron options: %s" % os.environ["HERON_OPTIONS"])
       pex_loader.load_pex(topology_pex)
       topology_class = pex_loader.import_and_get_class(topology_pex, topology_class_name)
       topology_class.write()

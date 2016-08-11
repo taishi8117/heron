@@ -56,7 +56,7 @@ class IntegrationTestSpout(Spout):
 
   @property
   def is_done(self):
-    return self.max_executions <= 0
+    return self.max_executions == 0
 
   def next_tuple(self):
     if self.is_done:
@@ -68,7 +68,7 @@ class IntegrationTestSpout(Spout):
     self.user_spout.next_tuple()
 
     if self.is_done:
-      self._emit_terminal_if_necessary()
+      self._emit_terminal_if_needed()
       Log.info("This topology is finished.")
 
   def ack(self, tup_id):

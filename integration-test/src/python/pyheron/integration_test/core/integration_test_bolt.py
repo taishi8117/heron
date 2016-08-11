@@ -65,7 +65,7 @@ class IntegrationTestBolt(Bolt):
 
   @property
   def is_done(self):
-    return self.terminal_to_receive <= 0
+    return self.terminal_to_receive == 0
 
   def process(self, tup):
     self.tuple_received += 1
@@ -82,7 +82,7 @@ class IntegrationTestBolt(Bolt):
         Log.info("Populating the terminals to downstream")
         super(IntegrationTestBolt, self).emit(
           [integ_const.INTEGRATION_TEST_TERMINAL],
-          stream=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID, anchors=[tup])
+          stream=integ_const.INTEGRATION_TEST_CONTROL_STREAM_ID)
     else:
       self.current_tuple_processing = tup
       self.user_bolt.process(tup)

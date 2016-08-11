@@ -24,7 +24,7 @@ class TestTopologyBuilder(TopologyBuilder):
   TERMINAL_BOLT_CLASS = AggregatorBolt
   def __init__(self, name, http_server_url):
     super(TestTopologyBuilder, self).__init__(name)
-    self.output_location = "%s/%sTopology" % (http_server_url, self.topology_name)
+    self.output_location = "%s/%s" % (http_server_url, self.topology_name)
 
     # map <name -> spout's component spec>
     self.spouts = {}
