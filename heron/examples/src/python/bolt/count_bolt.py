@@ -24,10 +24,9 @@ class CountBolt(Bolt):
     self.logger.info("In prepare() of CountBolt")
     self.counter = Counter()
     self.total = 0
-    self.stream_name = []
 
-    self.logger.info("Component-specific config: \n" + str(config))
-    self.logger.info("Context: \n" + str(context))
+    self.logger.info("Component-specific config: \n%s" % str(config))
+    self.logger.info("Context: \n%s" % str(context))
 
   def _increment(self, word, inc_by):
     self.counter[word] += inc_by
@@ -37,17 +36,6 @@ class CountBolt(Bolt):
     if self.is_tick(tup):
       self.log("Got tick tuple!")
       self.log("Current map: " + str(self.counter))
-      self.log("Stream name: " + str(self.stream_name))
       return
     word = tup.values[0]
     self._increment(word, 10 if word == "heron" else 1)
-
-    if tup.stream not in self.stream_name:
-      self.stream_name.append(tup.stream)
-
-    if self.total % 2 == 0:
-      self.logger.debug("Will fail tuple: " + str(tup))
-      self.fail(tup)
-    else:
-      self.logger.debug("Will ack tuple: " + str(tup))
-      self.ack(tup)

@@ -14,6 +14,7 @@
 '''module for example bolt: Consume Bolt'''
 from heron.streamparse.src.python import Bolt
 
+# pylint: disable=unused-argument
 class ConsumeBolt(Bolt):
   def initialize(self, config, context):
     self.logger.info("In prepare() of ConsumerBolt")

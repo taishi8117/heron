@@ -13,14 +13,13 @@
 # limitations under the License.
 '''module for example topology: CustomGroupingTopology'''
 
-from heron.streamparse.src.python import Topology, Grouping
-from heron.examples.src.python.word_spout import WordSpout
-from heron.examples.src.python.consume_bolt import ConsumeBolt
-from heron.common.src.python.utils.topology import ICustomGrouping
 from heron.common.src.python.utils.log import Log
+from heron.streamparse.src.python import Topology, Grouping, ICustomGrouping, constants
 
-import heron.common.src.python.constants as constants
+from heron.examples.src.python.spout import WordSpout
+from heron.examples.src.python.bolt import ConsumeBolt
 
+# pylint: disable=unused-argument
 class SampleCustomGrouping(ICustomGrouping):
   def prepare(self, context, component, stream, target_tasks):
     Log.info("In prepare of SampleCustomGrouping, "
@@ -39,6 +38,5 @@ class CustomGrouping(Topology):
 
   word_spout = WordSpout.spec(par=1)
   consume_bolt = ConsumeBolt.spec(par=3,
-                                  inputs={word_spout: Grouping.custom(custom_grouping_path),
-                                          word_spout['error']: Grouping.ALL},
+                                  inputs={word_spout: Grouping.custom(custom_grouping_path)},
                                   config={constants.TOPOLOGY_TICK_TUPLE_FREQ_SECS: 10})

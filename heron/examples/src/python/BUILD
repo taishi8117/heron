@@ -2,23 +2,30 @@ package(default_visibility = ["//visibility:public"])
 
 load("/tools/rules/pex_rules", "pex_library", "pex_binary")
 
-pex_binary(
-  name = "word_count",
-  srcs = ["word_count_topology.py",
-          "count_bolt.py",
-          "word_spout.py",
-          "test_task_hook.py"],
+pex_library(
+  name = "example_lib",
+  srcs = glob(['bolt/*.py', 'spout/*.py', 'misc/*.py']),
   deps = [
-    "//heron/streamparse/src/python:pyheron_lib"
+    '//heron/streamparse/src/python:pyheron_lib',
   ],
 )
 
+# with main method
+pex_binary(
+  name = "word_count",
+  srcs = ["word_count_topology.py"],
+  deps = [":example_lib"],
+)
+
+# without main method
 pex_binary(
   name = "custom_grouping",
-  srcs = ["custom_grouping_topology.py",
-          "consume_bolt.py",
-          "word_spout.py"],
-  deps = [
-    "//heron/streamparse/src/python:pyheron_lib"
-  ],
+  srcs = ["custom_grouping_topology.py"],
+  deps = [":example_lib"],
+)
+
+pex_binary(
+  name = "multi_stream",
+  srcs = ["multi_stream_topology.py"],
+  deps = [":example_lib"],
 )

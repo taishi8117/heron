@@ -14,12 +14,12 @@
 """module for example spout: WordSpout"""
 
 from itertools import cycle
-from heron.streamparse.src.python import Spout, Stream
+from heron.streamparse.src.python import Spout
 
 class WordSpout(Spout):
   """WordSpout: emits a set of words repeatedly"""
   # output field declarer
-  outputs = ['word', Stream(fields=['error_msg'], name='error')]
+  outputs = ['word']
 
   def initialize(self, config, context):
     self.logger.info("In initialize() of WordSpout")
@@ -29,8 +29,8 @@ class WordSpout(Spout):
     self.ack_count = 0
     self.fail_count = 0
 
-    self.logger.info("Component-specific config: \n" + str(config))
-    self.logger.info("Context: \n" + str(context))
+    self.logger.info("Component-specific config: \n%s" % str(config))
+    self.logger.info("Context: \n%s" % str(context))
 
   def next_tuple(self):
     word = next(self.words)
@@ -38,7 +38,6 @@ class WordSpout(Spout):
     self.emit_count += 1
     if self.emit_count % 100000 == 0:
       self.logger.info("Emitted " + str(self.emit_count))
-      self.emit(["test error"], tup_id='error id', stream='error')
 
   def ack(self, tup_id):
     self.ack_count += 1
