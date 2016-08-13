@@ -11,3 +11,12 @@ pex_library(
   ],
   reqs = ['colorlog==2.6.1', 'pyyaml==3.10'],
 )
+
+pex_binary(
+  name = "pyheron_pkg",
+  srcs = glob(["**/*.py"]),
+  deps = [
+    "//heron/common/src/python:pyheron_common_pkg",
+    "//heron/proto:proto-py",
+  ]
+)
