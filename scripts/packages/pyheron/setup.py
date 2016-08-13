@@ -4,8 +4,6 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 requirements = ['colorlog==2.6.1',
-                'tornado==4.0.2',
-                'pyyaml==3.10',
                 'protobuf==2.5.0',
                 'setuptools==18.0.1']
 
