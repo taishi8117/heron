@@ -1,0 +1,15 @@
+Metadata-Version: 1.1
+Name: pyheron
+Version: 0.0.1
+Summary: Python API for Heron topology
+Home-page: https://github.com/twitter/heron
+Author: Heron Release Team
+Author-email: streaming-compute@twitter.com
+License: UNKNOWN
+Description: Long description about pyheron
+Keywords: heron topology python
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Realtime streaming
+Classifier: Programming Language :: Python :: 2.7
