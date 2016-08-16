@@ -36,10 +36,6 @@ class MultiStreamSpout(Spout):
     self.emit_count += 1
 
     if self.emit_count % 100000 == 0:
-<<<<<<< HEAD
-      self.logger.info("Emitted " + str(self.emit_count))
-=======
       self.logger.info("Emitted %s" % str(self.emit_count))
->>>>>>> master
       self.logger.info("Emitting to error stream")
       self.emit(["test error message"], stream='error')
